@@ -279,13 +279,15 @@ fun ProfileScreen(
                     ) {
                         Column {
                             Text(
-                                text = "HSK Readiness Radar & AI Evaluation",
+                                text = "HSK Readiness Radar",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = FrostedPurplePrimary
                             )
                             Text(
                                 text = "ประเมินความพร้อมสอบ ${readinessScore.targetHskLevel.title}",
+                        maxLines = 1,
+                        softWrap = false,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = FrostedSlateLight
                             )
@@ -298,6 +300,8 @@ fun ProfileScreen(
                         ) {
                             Text(
                                 text = "${readinessScore.readinessPercentage}% พร้อมสอบ",
+                        maxLines = 1,
+                        softWrap = false,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Black,

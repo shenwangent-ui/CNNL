@@ -147,7 +147,7 @@ fun ShenHanMainApp(
         Triple("แผนที่เควสต์", Icons.Default.Map, "nav_quest_map"),
         Triple("ห้องแล็บคำศัพท์", Icons.Default.Science, "nav_vocab_lab"),
         Triple("AI Cinema", Icons.Default.Movie, "nav_ai_cinema"),
-        Triple("โปรไฟล์ & เรดาร์", Icons.Default.Person, "nav_profile")
+        Triple("โปรไฟล์", Icons.Default.Person, "nav_profile")
     )
 
     FrostedCanvasContainer {
