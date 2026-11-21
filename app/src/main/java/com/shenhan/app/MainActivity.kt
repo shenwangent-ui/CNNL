@@ -1,5 +1,14 @@
 package com.shenhan.app
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -81,10 +90,17 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
+                val density = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(density.density, fontScale = density.fontScale.coerceAtMost(1.15f))
+                ) {
+                    Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
                 ShenHanMainApp(
                     repository = appRepository,
                     audioEngine = audioEngine
                 )
+                                }
+                }
             }
         }
     }
