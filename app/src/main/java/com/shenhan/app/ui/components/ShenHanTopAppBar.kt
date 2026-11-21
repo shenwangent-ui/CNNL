@@ -1,191 +1,249 @@
 package com.shenhan.app.ui.components
+import androidx.compose.ui.draw.clipToBounds
 
-import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+
+import androidx.compose.ui.text.style.TextOverflow
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.shenhan.app.R
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.shenhan.app.R
+import com.shenhan.app.model.ScriptMode
 import com.shenhan.app.model.SubscriptionTier
-import com.shenhan.app.ui.theme.*
+import com.shenhan.app.ui.theme.FrostedGlassBorder
+import com.shenhan.app.ui.theme.FrostedGlassBorderSlate
+import com.shenhan.app.ui.theme.FrostedGlassWhite60
+import com.shenhan.app.ui.theme.FrostedGlassWhite80
+import com.shenhan.app.ui.theme.FrostedMatchGreen
+import com.shenhan.app.ui.theme.FrostedMatchGreenContainer
+import com.shenhan.app.ui.theme.FrostedMatchGreenDark
+import com.shenhan.app.ui.theme.FrostedPitchUser
+import com.shenhan.app.ui.theme.FrostedPurpleContainer
+import com.shenhan.app.ui.theme.FrostedPurpleLight
+import com.shenhan.app.ui.theme.FrostedPurpleOnContainer
+import com.shenhan.app.ui.theme.FrostedPurplePrimary
+import com.shenhan.app.ui.theme.FrostedSlateMuted
 
 @Composable
 fun ShenHanTopAppBar(
-    currentLevel: Int,
+    scriptMode: ScriptMode,
     streakDays: Int,
-    isTraditional: Boolean,
+    userXp: Int,
     subscriptionTier: SubscriptionTier,
     onToggleScript: () -> Unit,
+    onOpenHumanGates: () -> Unit,
     onOpenSubscription: () -> Unit,
-    onOpenHumanGates: () -> Unit
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .border(
+                width = 1.dp,
+                color = FrostedGlassBorder,
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+            )
+            .testTag("shenhan_top_app_bar"),
         color = FrostedGlassWhite80,
+        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
         shadowElevation = 2.dp
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
-            // ฝั่งซ้าย: โลโก้ + ชื่อแอป (ยืดหยุ่นตามพื้นที่จอ ไม่ดันปุ่มขวาตกขอบ)
             Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_app_icon_1788077123859),
-                    contentDescription = "ShenHan App Logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clipToBounds()
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "神漢",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = FrostedPurplePrimary,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "ShenHan",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "HSK LEVEL $currentLevel",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = FrostedPurplePrimary,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                        Text(
-                            text = "  • Live-Talk",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = FrostedSlateMuted,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-
-            // ฝั่งขวา: ปุ่มสลับอักษรย่อ/เต็ม + Streak + ข้อมูล Roadmap
-            Surface(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, FrostedGlassBorder, RoundedCornerShape(10.dp))
-                    .clickable { onToggleScript() }
-                    .testTag("script_toggle_button"),
-                color = FrostedPurpleContainer
-            ) {
+                // Brand Title with Frosted Purple Gradient Avatar
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Translate,
-                        contentDescription = "Toggle Script",
-                        tint = FrostedPurplePrimary,
-                        modifier = Modifier.size(14.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.img_app_icon_1788077123859),
+                        contentDescription = "ShenHan App Logo",
+            contentScale = ContentScale.Crop,
+                        modifier = Modifier.clipToBounds()
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.5.dp, FrostedPurplePrimary, RoundedCornerShape(12.dp))
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (isTraditional) "繁⇄简" else "简⇄繁",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = FrostedPurplePrimary,
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "神漢",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = FrostedPurplePrimary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "ShenHan",
                         maxLines = 1,
                         softWrap = false,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-
-            Surface(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(1.dp, FrostedGlassBorder, RoundedCornerShape(10.dp))
-                    .clickable { onOpenSubscription() },
-                color = FrostedGlassWhite80
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = "Daily Streak",
-                        tint = FrostedPitchAmber,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = "$streakDays",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Black,
-                        color = FrostedPitchAmber,
+                        overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         softWrap = false,
-                        fontSize = 11.sp
-                    )
+                        overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Normal,
+                                color = FrostedSlateMuted
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = FrostedPurpleContainer
+                            ) {
+                                Text(
+                                    text = "HSK LEVEL 4",
+                        maxLines = 1,
+                        softWrap = false,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FrostedPurpleOnContainer,
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                            Text(
+                                text = "• Live-Talk",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = FrostedSlateMuted,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
-            }
 
-            IconButton(
-                onClick = onOpenHumanGates,
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, FrostedGlassBorder, CircleShape)
-                    .background(FrostedGlassWhite80)
-                    .testTag("human_gates_button")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Assessment,
-                    contentDescription = "Project TOR Roadmap & Human Gates",
-                    tint = FrostedPurplePrimary,
-                    modifier = Modifier.size(16.dp)
-                )
+                // Action controls: 1-Tap Script Switcher, Streak Badge, TOR Gate Specs
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 1-Tap Simplified / Traditional Switcher
+                    Surface(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(
+                                1.dp,
+                                FrostedGlassBorder,
+                                RoundedCornerShape(16.dp)
+                            )
+                            .clickable { onToggleScript() }
+                            .testTag("script_toggle_button"),
+                        color = FrostedGlassWhite60
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Translate,
+                                contentDescription = "Switch Script",
+                                tint = FrostedPurplePrimary,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (scriptMode == ScriptMode.SIMPLIFIED) "简 ⇄ 繁" else "繁 ⇄ 简",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = FrostedPurplePrimary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    // Daily Streak Fire Badge
+                    Surface(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, FrostedGlassBorder, RoundedCornerShape(16.dp)),
+                        color = Color(0x33FFCC80)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFireDepartment,
+                                contentDescription = "Daily Streak",
+                                tint = FrostedPitchUser,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = "$streakDays",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Black,
+                                color = FrostedPitchUser,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    // TOR Specs / Human Checkpoints Info Button
+                    IconButton(
+                        onClick = onOpenHumanGates,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .border(1.dp, FrostedGlassBorder, CircleShape)
+                            .background(FrostedGlassWhite60)
+                            .testTag("human_gates_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Assessment,
+                            contentDescription = "Project TOR Roadmap & Human Gates",
+                            tint = FrostedPurplePrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
             }
         }
     }
 }
+
