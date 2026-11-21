@@ -1,4 +1,7 @@
 package com.shenhan.app.ui.screens
+import androidx.compose.ui.draw.clipToBounds
+
+import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.foundation.Image
 import androidx.compose.animation.AnimatedVisibility
@@ -202,7 +205,8 @@ fun AuthScreen(
             Image(
                 painter = painterResource(id = R.drawable.img_app_icon_1788077123859),
                 contentDescription = "ShenHan App Logo",
-                modifier = Modifier
+            contentScale = ContentScale.Crop,
+                modifier = Modifier.clipToBounds()
                     .size(96.dp)
                     .clip(RoundedCornerShape(26.dp))
                     .border(2.dp, FrostedPurplePrimary, RoundedCornerShape(26.dp))

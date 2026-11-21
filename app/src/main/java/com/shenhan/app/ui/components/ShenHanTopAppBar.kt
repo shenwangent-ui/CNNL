@@ -1,4 +1,9 @@
 package com.shenhan.app.ui.components
+import androidx.compose.ui.draw.clipToBounds
+
+import androidx.compose.ui.layout.ContentScale
+
+import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -92,12 +97,14 @@ fun ShenHanTopAppBar(
             ) {
                 // Brand Title with Frosted Purple Gradient Avatar
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.img_app_icon_1788077123859),
                         contentDescription = "ShenHan App Logo",
-                        modifier = Modifier
+            contentScale = ContentScale.Crop,
+                        modifier = Modifier.clipToBounds()
                             .size(46.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .border(1.5.dp, FrostedPurplePrimary, RoundedCornerShape(12.dp))
@@ -221,6 +228,9 @@ fun ShenHanTopAppBar(
                     ) {
                         Text(
                             text = subscriptionTier.badge,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,

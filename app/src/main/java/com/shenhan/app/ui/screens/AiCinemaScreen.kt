@@ -1,4 +1,5 @@
 package com.shenhan.app.ui.screens
+import androidx.compose.ui.draw.clipToBounds
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -140,7 +141,7 @@ fun AiCinemaScreen(
                                 Image(
                                     painter = painterResource(id = scen.coverImageRes),
                                     contentDescription = scen.titleTh,
-                                    modifier = Modifier
+                                    modifier = Modifier.clipToBounds()
                                         .fillMaxWidth()
                                         .height(75.dp),
                                     contentScale = ContentScale.Crop

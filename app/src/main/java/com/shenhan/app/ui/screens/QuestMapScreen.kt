@@ -460,10 +460,13 @@ fun QuestMapScreen(
                                 text = currentZone.titleTh,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color.White,
+                                modifier = Modifier.weight(1f).padding(end = 8.dp)
                             )
                             Text(
                                 text = "$completedNodesCount/${currentZone.nodes.size} ด่านสำเร็จ",
+                                maxLines = 1,
+                                softWrap = false,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = FrostedMatchGreenDark
