@@ -371,11 +371,11 @@ object SampleData {
         // === บทเรียนชีวิตจริง 5 หมวด (กิน-ขับถ่าย-พักผ่อน, สถานที่-ระยะทาง, พาหนะ-น้ำมัน-ราคา, แผนที่-เวลาถึง, สภาพอากาศ) ===
         VocabWord(
             id = "vocab_real_01",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             simplified = "洗手间在哪里",
             traditional = "洗手間在哪裡",
             pinyin = "xǐ shǒu jiān zài nǎ lǐ",
-            thaiPhonetic = "สี่ โส่ว เจียน ไจ้ หนา หลี่",
+            toneNumbers = listOf(3, 3, 1, 4, 3, 3),
             partOfSpeech = "วลีจำเป็น",
             meaningTh = "ห้องน้ำอยู่ที่ไหน",
             meaningEn = "Where is the restroom?",
@@ -389,11 +389,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_02",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             simplified = "拉肚子",
             traditional = "拉肚子",
             pinyin = "lā dù zi",
-            thaiPhonetic = "ลา ตู้ จึ",
+            toneNumbers = listOf(1, 4, 5),
             partOfSpeech = "คำกริยา",
             meaningTh = "ท้องเสีย / ปวดท้องถ่าย",
             meaningEn = "To have diarrhea / stomach upset",
@@ -407,11 +407,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_03",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             simplified = "不要花生",
             traditional = "不要花生",
             pinyin = "bú yào huā shēng",
-            thaiPhonetic = "ปู๋ เย่า ฮวา เซิง",
+            toneNumbers = listOf(2, 4, 1, 1),
             partOfSpeech = "วลีสั่งอาหาร",
             meaningTh = "ไม่ใส่ถั่วลิสง",
             meaningEn = "No peanuts please",
@@ -425,11 +425,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_04",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             simplified = "办理入住",
             traditional = "辦理入住",
             pinyin = "bàn lǐ rù zhù",
-            thaiPhonetic = "ปั้น หลี่ รู่ จู้",
+            toneNumbers = listOf(4, 3, 4, 4),
             partOfSpeech = "คำกริยา",
             meaningTh = "เช็กอินเข้าพักโรงแรม",
             meaningEn = "Check in at a hotel",
@@ -443,11 +443,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_05",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "请勿打扰",
             traditional = "請勿打擾",
             pinyin = "qǐng wù dǎ rǎo",
-            thaiPhonetic = "ฉิ่ง อู้ ต่า เหร่า",
+            toneNumbers = listOf(3, 4, 3, 3),
             partOfSpeech = "วลีสุภาพ",
             meaningTh = "ห้ามรบกวน / ขอความเป็นส่วนตัว",
             meaningEn = "Do Not Disturb / Need privacy",
@@ -461,11 +461,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_06",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "马桶冲不了水",
             traditional = "馬桶沖不了水",
             pinyin = "mǎ tǒng chōng bù liǎo shuǐ",
-            thaiPhonetic = "หม่า ถ่ง ชง ปู้ เหลี่ยว สุ่ย",
+            toneNumbers = listOf(3, 3, 1, 4, 3, 3),
             partOfSpeech = "วลีแจ้งซ่อม",
             meaningTh = "ชักโครกกดน้ำไม่ลง",
             meaningEn = "The toilet won't flush",
@@ -479,11 +479,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_07",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "加油站",
             traditional = "加油站",
             pinyin = "jiā yóu zhàn",
-            thaiPhonetic = "เจีย โหยว จ้าน",
+            toneNumbers = listOf(1, 2, 4),
             partOfSpeech = "คำนาม",
             meaningTh = "ปั๊มน้ำมัน",
             meaningEn = "Gas station / Petrol station",
@@ -497,11 +497,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_08",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "加多少升",
             traditional = "加多少升",
             pinyin = "jiā duō shǎo shēng",
-            thaiPhonetic = "เจีย ตัว ส่าว เซิง",
+            toneNumbers = listOf(1, 1, 3, 1),
             partOfSpeech = "คำถาม",
             meaningTh = "เติมกี่ลิตร",
             meaningEn = "How many liters to fill?",
@@ -515,11 +515,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_09",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "一升多少钱",
             traditional = "一升多少錢",
             pinyin = "yì shēng duō shǎo qián",
-            thaiPhonetic = "อี้ เซิง ตัว ส่าว เฉียน",
+            toneNumbers = listOf(4, 1, 1, 3, 2),
             partOfSpeech = "คำถาม",
             meaningTh = "ลิตรละเท่าไหร่",
             meaningEn = "How much per liter?",
@@ -533,11 +533,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_10",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "离这里多少公里",
             traditional = "離這裡多少公里",
             pinyin = "lí zhè lǐ duō shǎo gōng lǐ",
-            thaiPhonetic = "หลี เจ้อ หลี่ ตัว ส่าว กง หลี่",
+            toneNumbers = listOf(2, 4, 3, 1, 3, 1, 3),
             partOfSpeech = "คำถามระยะทาง",
             meaningTh = "ห่างจากที่นี่กี่กิโลเมตร",
             meaningEn = "How many kilometers from here?",
@@ -551,11 +551,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_11",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             simplified = "还要几分钟到",
             traditional = "還要幾分鐘到",
             pinyin = "hái yào jǐ fēn zhōng dào",
-            thaiPhonetic = "ไห เย่า จี่ เฟิน จง เต้า",
+            toneNumbers = listOf(2, 4, 3, 1, 1, 4),
             partOfSpeech = "คำถามเวลาถึง",
             meaningTh = "อีกกี่นาทีจะถึง",
             meaningEn = "How many more minutes until we arrive?",
@@ -569,11 +569,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_12",
-            hskLevel = HskLevel.HSK_3,
+            hskLevel = HskLevel.HSK3,
             simplified = "雷阵雨",
             traditional = "雷陣雨",
             pinyin = "léi zhèn yǔ",
-            thaiPhonetic = "เหลย เจิ้น อวี่",
+            toneNumbers = listOf(2, 4, 3),
             partOfSpeech = "คำนามสภาพอากาศ",
             meaningTh = "ฝนฟ้าคะนอง / พายุฝนฟ้าคะนอง",
             meaningEn = "Thunderstorm",
@@ -587,11 +587,11 @@ object SampleData {
         ),
         VocabWord(
             id = "vocab_real_13",
-            hskLevel = HskLevel.HSK_3,
+            hskLevel = HskLevel.HSK3,
             simplified = "打开地图导航",
             traditional = "打開地圖導航",
             pinyin = "dǎ kāi dì tú dǎo háng",
-            thaiPhonetic = "ต่า ไค ตี้ ถู เต่า หัง",
+            toneNumbers = listOf(3, 1, 4, 2, 3, 2),
             partOfSpeech = "วลีการเดินทาง",
             meaningTh = "เปิดแผนที่นำทาง",
             meaningEn = "Open map navigation",
@@ -782,7 +782,7 @@ object SampleData {
             titleEn = "Daily Survival: Food, Restroom & Hotel",
             titleZhSimp = "生活起居：餐饮与住宿",
             titleZhTrad = "生活起居：餐飲與住宿",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             coverImageRes = null,
             themeColorHex = 0xFF10B981,
             isUnlocked = true,
@@ -801,7 +801,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = true,
                     descriptionTh = "ฝึกพูดถามหาห้องน้ำ ปวดท้องเสีย และขอกระดาษชำระในสถานการณ์เร่งด่วน",
-                    hskLevel = HskLevel.HSK_1
+                    hskLevel = HskLevel.HSK1
                 ),
                 QuestNode(
                     id = "node_daily_2",
@@ -817,7 +817,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "สั่งอาหาร ไม่ใส่ถั่ว/ไม่เผ็ด ขอช้อนส้อม และเรียกเก็บเงิน",
-                    hskLevel = HskLevel.HSK_1
+                    hskLevel = HskLevel.HSK1
                 ),
                 QuestNode(
                     id = "node_daily_3",
@@ -833,7 +833,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "เช็กอินเข้าพัก แจ้งชักโครกกดไม่ลง แอร์ไม่เย็น และขอป้ายห้ามรบกวน",
-                    hskLevel = HskLevel.HSK_1
+                    hskLevel = HskLevel.HSK1
                 ),
                 QuestNode(
                     id = "node_daily_4",
@@ -849,7 +849,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "บททดสอบรวมการใช้ชีวิตในบ้านและโรงแรม ตั้งแต่ตื่นนอนจนเข้านอน",
-                    hskLevel = HskLevel.HSK_1
+                    hskLevel = HskLevel.HSK1
                 )
             )
         ),
@@ -859,7 +859,7 @@ object SampleData {
             titleEn = "Places, Distance, Vehicles & Fuel",
             titleZhSimp = "出行与加油：距离和价格",
             titleZhTrad = "出行與加油：距離和價格",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             coverImageRes = null,
             themeColorHex = 0xFFF59E0B,
             isUnlocked = true,
@@ -878,7 +878,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = true,
                     descriptionTh = "ถามระยะทางกี่เมตร กี่กิโลเมตร เดินไปได้ไหม และจุดสังเกตรอบตัว",
-                    hskLevel = HskLevel.HSK_2
+                    hskLevel = HskLevel.HSK2
                 ),
                 QuestNode(
                     id = "node_fuel_2",
@@ -894,7 +894,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "สั่งเติมเบนซิน 92/95 ดีเซล เติมเต็มถัง ถามราคาลิตรละเท่าไหร่ และยอดรวม",
-                    hskLevel = HskLevel.HSK_2
+                    hskLevel = HskLevel.HSK2
                 ),
                 QuestNode(
                     id = "node_fuel_3",
@@ -910,7 +910,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "เรียกรถยนต์ มอเตอร์ไซค์ รถไฟฟ้า และถามหาที่จอดรถ",
-                    hskLevel = HskLevel.HSK_2
+                    hskLevel = HskLevel.HSK2
                 )
             )
         ),
@@ -920,7 +920,7 @@ object SampleData {
             titleEn = "Maps, Directions, ETA & Thunderstorms",
             titleZhSimp = "地图导航与雷阵雨天气",
             titleZhTrad = "地圖導航與雷陣雨天氣",
-            hskLevel = HskLevel.HSK_3,
+            hskLevel = HskLevel.HSK3,
             coverImageRes = null,
             themeColorHex = 0xFF3B82F6,
             isUnlocked = true,
@@ -939,7 +939,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = true,
                     descriptionTh = "เปิดแผนที่นำทาง ตรงไป เลี้ยวซ้าย-ขวา กลับรถ และขึ้นทางด่วน",
-                    hskLevel = HskLevel.HSK_3
+                    hskLevel = HskLevel.HSK3
                 ),
                 QuestNode(
                     id = "node_nav_2",
@@ -955,7 +955,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "ถามเวลาเดินทาง อีกกี่นาทีจะถึงจุดหมาย และถึงกี่โมง",
-                    hskLevel = HskLevel.HSK_3
+                    hskLevel = HskLevel.HSK3
                 ),
                 QuestNode(
                     id = "node_nav_3",
@@ -971,7 +971,7 @@ object SampleData {
                     isUnlocked = true,
                     isCurrent = false,
                     descriptionTh = "เช็กพยากรณ์อากาศ ฝนฟ้าคะนอง พายุฝน ถนนลื่น และการวางแผนเดินทาง",
-                    hskLevel = HskLevel.HSK_3
+                    hskLevel = HskLevel.HSK3
                 )
             )
         )
@@ -1249,7 +1249,7 @@ object SampleData {
             titleEn = "Gas Station: Liters, Prices & Distance",
             titleZhSimp = "加油站：加多少升与问路",
             titleZhTrad = "加油站：加多少升與問路",
-            hskLevel = HskLevel.HSK_2,
+            hskLevel = HskLevel.HSK2,
             coverImageRes = null,
             npc = ScenarioNpc(
                 id = "npc_gas_attendant",
@@ -1329,7 +1329,7 @@ object SampleData {
             titleEn = "Hotel Daily Living: Room, Restroom & Food",
             titleZhSimp = "酒店生活：住宿、卫生间与餐饮",
             titleZhTrad = "酒店生活：住宿、衛生間與餐飲",
-            hskLevel = HskLevel.HSK_1,
+            hskLevel = HskLevel.HSK1,
             coverImageRes = null,
             npc = ScenarioNpc(
                 id = "npc_hotel_frontdesk",
