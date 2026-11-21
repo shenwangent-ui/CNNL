@@ -1,4 +1,9 @@
 package com.shenhan.app.ui.screens
+
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.shenhan.app.auth.RealAuthManager
 import androidx.compose.ui.draw.clipToBounds
 
 import androidx.compose.ui.layout.ContentScale
@@ -117,6 +122,8 @@ fun AuthScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var selectedDailyGoalMinutes by remember { mutableIntStateOf(placementResult?.suggestedDailyGoalMinutes ?: 15) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val authScope = rememberCoroutineScope()
     var successMessage by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current

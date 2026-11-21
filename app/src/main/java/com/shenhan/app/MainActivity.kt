@@ -1,5 +1,8 @@
 package com.shenhan.app
 
+import android.content.Intent
+import com.shenhan.app.auth.RealAuthManager
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,6 +84,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        intent?.data?.let { uri -> RealAuthManager.parseSupabaseCallbackUri(uri)?.let { repository.loginUser(it) } }
         enableEdgeToEdge()
 
         audioEngine = AudioEngine(this)
