@@ -97,7 +97,6 @@ fun ShenHanTopAppBar(
             ) {
                 // Brand Title with Frosted Purple Gradient Avatar
                 Row(
-            modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
@@ -110,7 +109,7 @@ fun ShenHanTopAppBar(
                             .border(1.5.dp, FrostedPurplePrimary, RoundedCornerShape(12.dp))
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "神漢",
@@ -121,6 +120,9 @@ fun ShenHanTopAppBar(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "ShenHan",
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Normal,
                                 color = FrostedSlateMuted
