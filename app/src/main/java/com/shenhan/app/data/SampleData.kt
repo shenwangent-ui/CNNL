@@ -366,7 +366,244 @@ object SampleData {
             strokeCount = 12,
             srsStage = 0,
             mastery = SrsMastery.NEW
+        ),
+
+        // === บทเรียนชีวิตจริง 5 หมวด (กิน-ขับถ่าย-พักผ่อน, สถานที่-ระยะทาง, พาหนะ-น้ำมัน-ราคา, แผนที่-เวลาถึง, สภาพอากาศ) ===
+        VocabWord(
+            id = "vocab_real_01",
+            hskLevel = HskLevel.HSK_1,
+            simplified = "洗手间在哪里",
+            traditional = "洗手間在哪裡",
+            pinyin = "xǐ shǒu jiān zài nǎ lǐ",
+            thaiPhonetic = "สี่ โส่ว เจียน ไจ้ หนา หลี่",
+            partOfSpeech = "วลีจำเป็น",
+            meaningTh = "ห้องน้ำอยู่ที่ไหน",
+            meaningEn = "Where is the restroom?",
+            exampleSentenceSimp = "请问，附近的洗手间在哪里？",
+            exampleSentenceTrad = "請問，附近的洗手間在哪裡？",
+            examplePinyin = "Qǐngwèn, fùjìn de xǐshǒujiān zài nǎlǐ?",
+            exampleMeaningTh = "ขอโทษครับ ห้องน้ำแถวนี้ตั้งอยู่ที่ไหน",
+            exampleMeaningEn = "Excuse me, where is the nearest restroom?",
+            strokeCount = 9,
+            strokeOrderTipTh = "ใช้คำว่า 洗手間 (สีโส่วเจียน) จะสุภาพกว่า 廁所 ในโรงแรมและร้านอาหาร"
+        ),
+        VocabWord(
+            id = "vocab_real_02",
+            hskLevel = HskLevel.HSK_1,
+            simplified = "拉肚子",
+            traditional = "拉肚子",
+            pinyin = "lā dù zi",
+            thaiPhonetic = "ลา ตู้ จึ",
+            partOfSpeech = "คำกริยา",
+            meaningTh = "ท้องเสีย / ปวดท้องถ่าย",
+            meaningEn = "To have diarrhea / stomach upset",
+            exampleSentenceSimp = "我突然拉肚子，急需找厕所。",
+            exampleSentenceTrad = "我突然拉肚子，急需找廁所。",
+            examplePinyin = "Wǒ tūrán lādùzi, jíxū zhǎo cèsuǒ.",
+            exampleMeaningTh = "ฉันปวดท้องเสียกะทันหัน ต้องรีบหาห้องน้ำด่วน",
+            exampleMeaningEn = "I suddenly have diarrhea and urgently need a toilet.",
+            strokeCount = 8,
+            strokeOrderTipTh = "คำสำคัญเวลาต้องรีบขอเข้าห้องน้ำหรือซื้อยาที่ร้านขายยา"
+        ),
+        VocabWord(
+            id = "vocab_real_03",
+            hskLevel = HskLevel.HSK_1,
+            simplified = "不要花生",
+            traditional = "不要花生",
+            pinyin = "bú yào huā shēng",
+            thaiPhonetic = "ปู๋ เย่า ฮวา เซิง",
+            partOfSpeech = "วลีสั่งอาหาร",
+            meaningTh = "ไม่ใส่ถั่วลิสง",
+            meaningEn = "No peanuts please",
+            exampleSentenceSimp = "老板，这道菜不要放花生和豆子。",
+            exampleSentenceTrad = "老闆，這道菜不要放花生和豆子。",
+            examplePinyin = "Lǎobǎn, zhè dào cài bú yào fàng huāshēng hé dòuzi.",
+            exampleMeaningTh = "เถ้าแก่ จานนี้ไม่ใส่ถั่วลิสงกับถั่วนะครับ",
+            exampleMeaningEn = "Boss, please don't put peanuts or beans in this dish.",
+            strokeCount = 7,
+            strokeOrderTipTh = "โครงสร้าง 不要放... (ปู๋ เย่า ฟั่ง...) ใช้สั่งไม่ใส่วัตถุดิบที่ไม่ทานได้ทุกอย่าง"
+        ),
+        VocabWord(
+            id = "vocab_real_04",
+            hskLevel = HskLevel.HSK_1,
+            simplified = "办理入住",
+            traditional = "辦理入住",
+            pinyin = "bàn lǐ rù zhù",
+            thaiPhonetic = "ปั้น หลี่ รู่ จู้",
+            partOfSpeech = "คำกริยา",
+            meaningTh = "เช็กอินเข้าพักโรงแรม",
+            meaningEn = "Check in at a hotel",
+            exampleSentenceSimp = "你好，我要办理入住，这是我的护照。",
+            exampleSentenceTrad = "你好，我要辦理入住，這是我的護照。",
+            examplePinyin = "Nǐ hǎo, wǒ yào bànlǐ rùzhù, zhè shì wǒ de hùzhào.",
+            exampleMeaningTh = "สวัสดีครับ ผมต้องการเช็กอินเข้าพัก นี่คือพาสปอร์ตของผม",
+            exampleMeaningEn = "Hello, I'd like to check in, here is my passport.",
+            strokeCount = 7,
+            strokeOrderTipTh = "คำตรงข้ามคือ 退房 (ทุ่ย ฝาง) แปลว่า เช็กเอาต์คืนห้องพัก"
+        ),
+        VocabWord(
+            id = "vocab_real_05",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "请勿打扰",
+            traditional = "請勿打擾",
+            pinyin = "qǐng wù dǎ rǎo",
+            thaiPhonetic = "ฉิ่ง อู้ ต่า เหร่า",
+            partOfSpeech = "วลีสุภาพ",
+            meaningTh = "ห้ามรบกวน / ขอความเป็นส่วนตัว",
+            meaningEn = "Do Not Disturb / Need privacy",
+            exampleSentenceSimp = "我们想休息一下，请勿打扰。",
+            exampleSentenceTrad = "我們想休息一下，請勿打擾。",
+            examplePinyin = "Wǒmen xiǎng xiūxi yíxià, qǐng wù dǎrǎo.",
+            exampleMeaningTh = "พวกเราอยากพักผ่อนส่วนตัวสักหน่อย กรุณาอย่ารบกวน",
+            exampleMeaningEn = "We want to rest for a bit, please do not disturb.",
+            strokeCount = 10,
+            strokeOrderTipTh = "ใช้ติดหน้าประตูห้องพักหรือบอกพนักงานโรงแรมเมื่อต้องการเวลาส่วนตัว"
+        ),
+        VocabWord(
+            id = "vocab_real_06",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "马桶冲不了水",
+            traditional = "馬桶沖不了水",
+            pinyin = "mǎ tǒng chōng bù liǎo shuǐ",
+            thaiPhonetic = "หม่า ถ่ง ชง ปู้ เหลี่ยว สุ่ย",
+            partOfSpeech = "วลีแจ้งซ่อม",
+            meaningTh = "ชักโครกกดน้ำไม่ลง",
+            meaningEn = "The toilet won't flush",
+            exampleSentenceSimp = "服务员，房间里的马桶冲不了水，空调也不制冷。",
+            exampleSentenceTrad = "服務員，房間裡的馬桶沖不了水，空調也不製冷。",
+            examplePinyin = "Fúwùyuán, fángjiān lǐ de mǎtǒng chōng bù liǎo shuǐ, kōngtiáo yě bù zhìlěng.",
+            exampleMeaningTh = "พนักงานครับ ชักโครกในห้องกดน้ำไม่ลง แอร์ก็ไม่เย็นด้วย",
+            exampleMeaningEn = "Attendant, the toilet in the room won't flush and the AC isn't cooling.",
+            strokeCount = 10,
+            strokeOrderTipTh = "โครงสร้าง กริยา + 不了 (ปู้ เหลี่ยว) แปลว่า ทำสิ่งนั้นไม่ได้/ไม่สำเร็จ"
+        ),
+        VocabWord(
+            id = "vocab_real_07",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "加油站",
+            traditional = "加油站",
+            pinyin = "jiā yóu zhàn",
+            thaiPhonetic = "เจีย โหยว จ้าน",
+            partOfSpeech = "คำนาม",
+            meaningTh = "ปั๊มน้ำมัน",
+            meaningEn = "Gas station / Petrol station",
+            exampleSentenceSimp = "前面两公里就有一个加油站。",
+            exampleSentenceTrad = "前面兩公里就有一個加油站。",
+            examplePinyin = "Qiánmiàn liǎng gōnglǐ jiù yǒu yí gè jiāyóuzhàn.",
+            exampleMeaningTh = "ข้างหน้าอีก 2 กิโลเมตรก็มีปั๊มน้ำมันแล้ว",
+            exampleMeaningEn = "There is a gas station two kilometers ahead.",
+            strokeCount = 8,
+            strokeOrderTipTh = "คำว่า 加油 แปลตรงตัวว่า เติมน้ำมัน และยังใช้พูดให้กำลังใจว่า 'สู้ๆ' ได้ด้วย"
+        ),
+        VocabWord(
+            id = "vocab_real_08",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "加多少升",
+            traditional = "加多少升",
+            pinyin = "jiā duō shǎo shēng",
+            thaiPhonetic = "เจีย ตัว ส่าว เซิง",
+            partOfSpeech = "คำถาม",
+            meaningTh = "เติมกี่ลิตร",
+            meaningEn = "How many liters to fill?",
+            exampleSentenceSimp = "请帮我加三十升95号汽油，一共多少钱？",
+            exampleSentenceTrad = "請幫我加三十升95號汽油，一共多少錢？",
+            examplePinyin = "Qǐng bāng wǒ jiā sānshí shēng jiǔshíwǔ hào qìyóu, yígòng duōshǎo qián?",
+            exampleMeaningTh = "ช่วยเติมเบนซิน 95 ให้ผม 30 ลิตร ราคารวมทั้งหมดเท่าไหร่ครับ",
+            exampleMeaningEn = "Please fill 30 liters of 95 gasoline, how much is the total?",
+            strokeCount = 5,
+            strokeOrderTipTh = "升 (เซิง) คือหน่วย 'ลิตร' ส่วน 汽油 คือ เบนซิน และ 柴油 คือ ดีเซล"
+        ),
+        VocabWord(
+            id = "vocab_real_09",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "一升多少钱",
+            traditional = "一升多少錢",
+            pinyin = "yì shēng duō shǎo qián",
+            thaiPhonetic = "อี้ เซิง ตัว ส่าว เฉียน",
+            partOfSpeech = "คำถาม",
+            meaningTh = "ลิตรละเท่าไหร่",
+            meaningEn = "How much per liter?",
+            exampleSentenceSimp = "今天92号汽油一升多少钱？直接加满吧。",
+            exampleSentenceTrad = "今天92號汽油一升多少錢？直接加滿吧。",
+            examplePinyin = "Jīntiān jiǔshí'èr hào qìyóu yì shēng duōshǎo qián? Zhíjiē jiāmǎn ba.",
+            exampleMeaningTh = "วันนี้เบนซิน 92 ลิตรละเท่าไหร่ เติมเต็มถังเลยละกัน",
+            exampleMeaningEn = "How much is 92 gasoline per liter today? Just fill it up.",
+            strokeCount = 4,
+            strokeOrderTipTh = "คำว่า 加满 (เจีย หม่าน) แปลว่า เติมเต็มถัง"
+        ),
+        VocabWord(
+            id = "vocab_real_10",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "离这里多少公里",
+            traditional = "離這裡多少公里",
+            pinyin = "lí zhè lǐ duō shǎo gōng lǐ",
+            thaiPhonetic = "หลี เจ้อ หลี่ ตัว ส่าว กง หลี่",
+            partOfSpeech = "คำถามระยะทาง",
+            meaningTh = "ห่างจากที่นี่กี่กิโลเมตร",
+            meaningEn = "How many kilometers from here?",
+            exampleSentenceSimp = "火车站离这里多少公里？走路大概五百米。",
+            exampleSentenceTrad = "火車站離這裡多少公里？走路大概五百米。",
+            examplePinyin = "Huǒchēzhàn lí zhèlǐ duōshǎo gōnglǐ? Zǒulù dàgài wǔbǎi mǐ.",
+            exampleMeaningTh = "สถานีรถไฟห่างจากที่นี่กี่กิโลเมตร เดินเท้าประมาณ 500 เมตร",
+            exampleMeaningEn = "How many kilometers is the train station from here? About 500 meters on foot.",
+            strokeCount = 10,
+            strokeOrderTipTh = "公里 (กงหลี่) = กิโลเมตร, 米 (หมี่) = เมตร"
+        ),
+        VocabWord(
+            id = "vocab_real_11",
+            hskLevel = HskLevel.HSK_2,
+            simplified = "还要几分钟到",
+            traditional = "還要幾分鐘到",
+            pinyin = "hái yào jǐ fēn zhōng dào",
+            thaiPhonetic = "ไห เย่า จี่ เฟิน จง เต้า",
+            partOfSpeech = "คำถามเวลาถึง",
+            meaningTh = "อีกกี่นาทีจะถึง",
+            meaningEn = "How many more minutes until we arrive?",
+            exampleSentenceSimp = "师傅，前面堵车吗？我们还要几分钟到酒店？",
+            exampleSentenceTrad = "師傅，前面堵車嗎？我們還要幾分鐘到酒店？",
+            examplePinyin = "Shīfu, qiánmiàn dǔchē ma? Wǒmen hái yào jǐ fēnzhōng dào jiǔdiàn?",
+            exampleMeaningTh = "พี่คนขับ ข้างหน้ารถติดไหม พวกเราอีกกี่นาทีจะถึงโรงแรม",
+            exampleMeaningEn = "Driver, is there traffic ahead? How many more minutes until we reach the hotel?",
+            strokeCount = 7,
+            strokeOrderTipTh = "ใช้ถามคนขับแท็กซี่หรือเช็กเวลา ETA ได้ทุกสถานการณ์"
+        ),
+        VocabWord(
+            id = "vocab_real_12",
+            hskLevel = HskLevel.HSK_3,
+            simplified = "雷阵雨",
+            traditional = "雷陣雨",
+            pinyin = "léi zhèn yǔ",
+            thaiPhonetic = "เหลย เจิ้น อวี่",
+            partOfSpeech = "คำนามสภาพอากาศ",
+            meaningTh = "ฝนฟ้าคะนอง / พายุฝนฟ้าคะนอง",
+            meaningEn = "Thunderstorm",
+            exampleSentenceSimp = "天气预报说今天下午有雷阵雨，开车注意安全。",
+            exampleSentenceTrad = "天氣預報說今天下午有雷陣雨，開車注意安全。",
+            examplePinyin = "Tiānqì yùbào shuō jīntiān xiàwǔ yǒu léizhènyǔ, kāichē zhùyì ānquán.",
+            exampleMeaningTh = "พยากรณ์อากาศบอกว่าบ่ายวันนี้มีฝนฟ้าคะนอง ขับรถระวังความปลอดภัยด้วย",
+            exampleMeaningEn = "The forecast says there will be thunderstorms this afternoon, drive safely.",
+            strokeCount = 13,
+            strokeOrderTipTh = "雷 (เหลย) แปลว่า ฟ้าร้อง/ฟ้าผ่า, 暴雨 (เป้าอวี่) แปลว่า ฝนตกหนักมาก"
+        ),
+        VocabWord(
+            id = "vocab_real_13",
+            hskLevel = HskLevel.HSK_3,
+            simplified = "打开地图导航",
+            traditional = "打開地圖導航",
+            pinyin = "dǎ kāi dì tú dǎo háng",
+            thaiPhonetic = "ต่า ไค ตี้ ถู เต่า หัง",
+            partOfSpeech = "วลีการเดินทาง",
+            meaningTh = "เปิดแผนที่นำทาง",
+            meaningEn = "Open map navigation",
+            exampleSentenceSimp = "我迷路了，请帮我打开地图导航，前面路口向左转。",
+            exampleSentenceTrad = "我迷路了，請幫我打開地圖導航，前面路口向左轉。",
+            examplePinyin = "Wǒ mílù le, qǐng bāng wǒ dǎkāi dìtú dǎoháng, qiánmiàn lùkǒu xiàng zuǒ zhuǎn.",
+            exampleMeaningTh = "ฉันหลงทางแล้ว ช่วยเปิดแผนที่นำทางให้หน่อย แยกข้างหน้าเลี้ยวซ้าย",
+            exampleMeaningEn = "I'm lost, please help me open map navigation, turn left at the intersection ahead.",
+            strokeCount = 8,
+            strokeOrderTipTh = "一直往前走 (ตรงไป), 向左转 (เลี้ยวซ้าย), 向右转 (เลี้ยวขวา), 掉头 (กลับรถ)"
         )
+
     )
 
     // 3. Quest Map Zones & Nodes
@@ -537,7 +774,208 @@ object SampleData {
                     hskLevel = HskLevel.HSK4
                 )
             )
+        ),
+
+        QuestZone(
+            id = "zone_daily_life_hsk1",
+            titleTh = "ชีวิตประจำวัน: กิน-ห้องน้ำ-ที่พัก",
+            titleEn = "Daily Survival: Food, Restroom & Hotel",
+            titleZhSimp = "生活起居：餐饮与住宿",
+            titleZhTrad = "生活起居：餐飲與住宿",
+            hskLevel = HskLevel.HSK_1,
+            coverImageRes = null,
+            themeColorHex = 0xFF10B981,
+            isUnlocked = true,
+            nodes = listOf(
+                QuestNode(
+                    id = "node_daily_1",
+                    zoneId = "zone_daily_life_hsk1",
+                    titleTh = "เข้าห้องน้ำ & ปวดท้องฉุกเฉิน",
+                    titleEn = "Restroom & Stomach Emergency",
+                    titleZhSimp = "洗手间与拉肚子",
+                    titleZhTrad = "洗手間與拉肚子",
+                    nodeType = QuestNodeType.VOCAB_SRS,
+                    iconEmoji = "🚻",
+                    xpReward = 60,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = true,
+                    descriptionTh = "ฝึกพูดถามหาห้องน้ำ ปวดท้องเสีย และขอกระดาษชำระในสถานการณ์เร่งด่วน",
+                    hskLevel = HskLevel.HSK_1
+                ),
+                QuestNode(
+                    id = "node_daily_2",
+                    zoneId = "zone_daily_life_hsk1",
+                    titleTh = "สั่งอาหารตามใจ & ไม่ใส่ของที่ไม่กิน",
+                    titleEn = "Custom Food Orders",
+                    titleZhSimp = "点菜与忌口",
+                    titleZhTrad = "點菜與忌口",
+                    nodeType = QuestNodeType.SENTENCE_BUILDER,
+                    iconEmoji = "🍜",
+                    xpReward = 70,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "สั่งอาหาร ไม่ใส่ถั่ว/ไม่เผ็ด ขอช้อนส้อม และเรียกเก็บเงิน",
+                    hskLevel = HskLevel.HSK_1
+                ),
+                QuestNode(
+                    id = "node_daily_3",
+                    zoneId = "zone_daily_life_hsk1",
+                    titleTh = "เช็กอินโรงแรม & แจ้งซ่อมห้องพัก",
+                    titleEn = "Hotel Check-in & Room Issues",
+                    titleZhSimp = "酒店入住与报修",
+                    titleZhTrad = "酒店入住與報修",
+                    nodeType = QuestNodeType.CINEMA_ROLEPLAY,
+                    iconEmoji = "🏨",
+                    xpReward = 90,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "เช็กอินเข้าพัก แจ้งชักโครกกดไม่ลง แอร์ไม่เย็น และขอป้ายห้ามรบกวน",
+                    hskLevel = HskLevel.HSK_1
+                ),
+                QuestNode(
+                    id = "node_daily_4",
+                    zoneId = "zone_daily_life_hsk1",
+                    titleTh = "เวลาส่วนตัว พักผ่อน & การนัดหมาย",
+                    titleEn = "Rest, Privacy & Dating",
+                    titleZhSimp = "休息与私人空间",
+                    titleZhTrad = "休息與私人空間",
+                    nodeType = QuestNodeType.BOSS_CHALLENGE,
+                    iconEmoji = "🛏️",
+                    xpReward = 110,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "บททดสอบรวมการใช้ชีวิตในบ้านและโรงแรม ตั้งแต่ตื่นนอนจนเข้านอน",
+                    hskLevel = HskLevel.HSK_1
+                )
+            )
+        ),
+        QuestZone(
+            id = "zone_transport_fuel_hsk2",
+            titleTh = "สถานที่ ระยะทาง พาหนะ & เติมน้ำมัน",
+            titleEn = "Places, Distance, Vehicles & Fuel",
+            titleZhSimp = "出行与加油：距离和价格",
+            titleZhTrad = "出行與加油：距離和價格",
+            hskLevel = HskLevel.HSK_2,
+            coverImageRes = null,
+            themeColorHex = 0xFFF59E0B,
+            isUnlocked = true,
+            nodes = listOf(
+                QuestNode(
+                    id = "node_fuel_1",
+                    zoneId = "zone_transport_fuel_hsk2",
+                    titleTh = "ชื่อสถานที่สำคัญ & วัดระยะทาง",
+                    titleEn = "Key Places & Distance",
+                    titleZhSimp = "地点与多少公里",
+                    titleZhTrad = "地點與多少公里",
+                    nodeType = QuestNodeType.VOCAB_SRS,
+                    iconEmoji = "📍",
+                    xpReward = 75,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = true,
+                    descriptionTh = "ถามระยะทางกี่เมตร กี่กิโลเมตร เดินไปได้ไหม และจุดสังเกตรอบตัว",
+                    hskLevel = HskLevel.HSK_2
+                ),
+                QuestNode(
+                    id = "node_fuel_2",
+                    zoneId = "zone_transport_fuel_hsk2",
+                    titleTh = "ปั๊มน้ำมัน: เติมกี่ลิตร & ลิตรละเท่าไหร่",
+                    titleEn = "Gas Station: Liters & Prices",
+                    titleZhSimp = "加油站：加多少升",
+                    titleZhTrad = "加油站：加多少升",
+                    nodeType = QuestNodeType.CINEMA_ROLEPLAY,
+                    iconEmoji = "⛽",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "สั่งเติมเบนซิน 92/95 ดีเซล เติมเต็มถัง ถามราคาลิตรละเท่าไหร่ และยอดรวม",
+                    hskLevel = HskLevel.HSK_2
+                ),
+                QuestNode(
+                    id = "node_fuel_3",
+                    zoneId = "zone_transport_fuel_hsk2",
+                    titleTh = "เรียกแท็กซี่ & พาหนะเดินทาง",
+                    titleEn = "Taxi & Transit Vehicles",
+                    titleZhSimp = "打车与交通工具",
+                    titleZhTrad = "打車與交通工具",
+                    nodeType = QuestNodeType.SENTENCE_BUILDER,
+                    iconEmoji = "🚕",
+                    xpReward = 85,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "เรียกรถยนต์ มอเตอร์ไซค์ รถไฟฟ้า และถามหาที่จอดรถ",
+                    hskLevel = HskLevel.HSK_2
+                )
+            )
+        ),
+        QuestZone(
+            id = "zone_weather_nav_hsk3",
+            titleTh = "แผนที่ ถามทาง เวลาถึง & ฝนฟ้าคะนอง",
+            titleEn = "Maps, Directions, ETA & Thunderstorms",
+            titleZhSimp = "地图导航与雷阵雨天气",
+            titleZhTrad = "地圖導航與雷陣雨天氣",
+            hskLevel = HskLevel.HSK_3,
+            coverImageRes = null,
+            themeColorHex = 0xFF3B82F6,
+            isUnlocked = true,
+            nodes = listOf(
+                QuestNode(
+                    id = "node_nav_1",
+                    zoneId = "zone_weather_nav_hsk3",
+                    titleTh = "แผนที่ & ถามเส้นทางเลี้ยวซ้าย-ขวา",
+                    titleEn = "Maps & Turn-by-Turn Directions",
+                    titleZhSimp = "打开地图与问路",
+                    titleZhTrad = "打開地圖與問路",
+                    nodeType = QuestNodeType.SENTENCE_BUILDER,
+                    iconEmoji = "🗺️",
+                    xpReward = 90,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = true,
+                    descriptionTh = "เปิดแผนที่นำทาง ตรงไป เลี้ยวซ้าย-ขวา กลับรถ และขึ้นทางด่วน",
+                    hskLevel = HskLevel.HSK_3
+                ),
+                QuestNode(
+                    id = "node_nav_2",
+                    zoneId = "zone_weather_nav_hsk3",
+                    titleTh = "เช็กรถติด & อีกกี่นาทีถึง (ETA)",
+                    titleEn = "Traffic & Minutes to Arrival",
+                    titleZhSimp = "堵车与还要几分钟到",
+                    titleZhTrad = "堵車與還要幾分鐘到",
+                    nodeType = QuestNodeType.VOCAB_SRS,
+                    iconEmoji = "⏱️",
+                    xpReward = 95,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "ถามเวลาเดินทาง อีกกี่นาทีจะถึงจุดหมาย และถึงกี่โมง",
+                    hskLevel = HskLevel.HSK_3
+                ),
+                QuestNode(
+                    id = "node_nav_3",
+                    zoneId = "zone_weather_nav_hsk3",
+                    titleTh = "สภาพอากาศรายวัน & ฝนฟ้าคะนอง",
+                    titleEn = "Daily Weather & Thunderstorms",
+                    titleZhSimp = "每日天气与雷阵雨",
+                    titleZhTrad = "每日天氣與雷陣雨",
+                    nodeType = QuestNodeType.CINEMA_ROLEPLAY,
+                    iconEmoji = "⛈️",
+                    xpReward = 120,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = false,
+                    descriptionTh = "เช็กพยากรณ์อากาศ ฝนฟ้าคะนอง พายุฝน ถนนลื่น และการวางแผนเดินทาง",
+                    hskLevel = HskLevel.HSK_3
+                )
+            )
         )
+
     )
 
     // 4. Sample Zone Quiz
@@ -577,7 +1015,60 @@ object SampleData {
             correctIndex = 2,
             explanationTh = "คำซ้ำส่วนใหญ่ในภาษาจีน พยางค์ที่สองจะกลายเป็นเสียงเบา (轻声) ออกเสียงสั้นและเบา",
             explanationEn = "The second syllable of repeated words usually becomes a light neutral tone."
+        ),
+
+        QuizQuestion(
+            id = "quiz_real_01",
+            promptTh = "เมื่อเข้าปั๊มน้ำมันและต้องการถามว่า 'เติมกี่ลิตร และลิตรละเท่าไหร่' ต้องพูดว่าอย่างไร?",
+            promptEn = "How do you ask 'How many liters, and how much per liter?' at a gas station?",
+            chineseSimp = "加多少升？一升多少钱？",
+            chineseTrad = "加多少升？一升多少錢？",
+            pinyin = "Jiā duōshǎo shēng? Yì shēng duōshǎo qián?",
+            options = listOf(
+                "加多少升？一升多少钱？",
+                "离这里多少公里？",
+                "还要几分钟到酒店？",
+                "马桶冲不了水怎么办？"
+            ),
+            correctIndex = 0,
+            explanationTh = "升 (เซิง) แปลว่า ลิตร ดังนั้น 加多少升 คือ เติมกี่ลิตร และ 一升多少钱 คือ ลิตรละเท่าไหร่",
+            explanationEn = "升 means liter; 加多少升 asks how many liters and 一升多少钱 asks price per liter."
+        ),
+        QuizQuestion(
+            id = "quiz_real_02",
+            promptTh = "นั่งรถเดินทางอยู่แล้วอยากถามคนขับว่า 'อีกกี่นาทีจะถึง' ต้องถามประโยคไหน?",
+            promptEn = "Which sentence asks 'How many more minutes until we arrive?'",
+            chineseSimp = "师傅，我们还要几分钟到？",
+            chineseTrad = "師傅，我們還要幾分鐘到？",
+            pinyin = "Shīfu, wǒmen hái yào jǐ fēnzhōng dào?",
+            options = listOf(
+                "今天下午有雷阵雨吗？",
+                "师傅，我们还要几分钟到？",
+                "请帮我办理入住。",
+                "这道菜不要放花生。"
+            ),
+            correctIndex = 1,
+            explanationTh = "还要几分钟到 (ไห เย่า จี่ เฟิน จง เต้า) แปลว่า อีกกี่นาทีจะถึง",
+            explanationEn = "还要几分钟到 directly translates to 'how many more minutes to arrive'."
+        ),
+        QuizQuestion(
+            id = "quiz_real_03",
+            promptTh = "พยากรณ์อากาศแจ้งเตือน '雷阵雨' หมายถึงสภาพอากาศแบบใด?",
+            promptEn = "What weather condition does '雷阵雨' warn about?",
+            chineseSimp = "今天下午有雷阵雨，路上小心。",
+            chineseTrad = "今天下午有雷陣雨，路上小心。",
+            pinyin = "Jīntiān xiàwǔ yǒu léizhènyǔ, lùshàng xiǎoxīn.",
+            options = listOf(
+                "แดดจัดท้องฟ้าแจ่มใส",
+                "อากาศหนาวหิมะตก",
+                "ฝนฟ้าคะนอง / พายุฝนฟ้าคะนอง",
+                "หมอกลงจัดตอนเช้า"
+            ),
+            correctIndex = 2,
+            explanationTh = "雷阵雨 (เหลย เจิ้น อวี่) แปลว่า ฝนฟ้าคะนอง ควรระมัดระวังในการขับขี่",
+            explanationEn = "雷阵雨 means thunderstorm; take extra care while driving."
         )
+
     )
 
     // 5. AI Cinema Scenarios Bank
@@ -749,7 +1240,142 @@ object SampleData {
             targetKeyPhrasesSimp = listOf("微辣 (wēilà - เผ็ดน้อย)", "不要放香菜 (bú yào fàng xiāngcài - ไม่ใส่ผักชี)", "买单 (mǎidān - เช็กบิล)", "扫码 (sǎomǎ - สแกนโค้ด)"),
             targetKeyPhrasesTrad = listOf("微辣", "不要放香菜", "買單", "掃碼"),
             targetKeyPhrasesTh = listOf("เผ็ดน้อย", "ไม่ใส่ผักชี", "เช็กบิล", "สแกนคิวอาร์")
+        ),
+
+        CinemaScenario(
+            id = "scenario_gas_station_real",
+            category = ScenarioCategory.TRAVEL_AIRPORT,
+            titleTh = "ปั๊มน้ำมัน: เติมกี่ลิตร ราคา & ระยะทาง",
+            titleEn = "Gas Station: Liters, Prices & Distance",
+            titleZhSimp = "加油站：加多少升与问路",
+            titleZhTrad = "加油站：加多少升與問路",
+            hskLevel = HskLevel.HSK_2,
+            coverImageRes = null,
+            npc = ScenarioNpc(
+                id = "npc_gas_attendant",
+                nameZhSimp = "李师傅",
+                nameZhTrad = "李師傅",
+                nameTh = "ช่างหลี่ (พนักงานปั๊ม)",
+                roleTitleTh = "พนักงานสถานีบริการน้ำมัน",
+                avatarEmoji = "⛽",
+                personalityTh = "คล่องแคล่ว คิดเลขไว และบอกเส้นทางแม่นยำ"
+            ),
+            plotIntroTh = "คุณขับรถแวะเติมน้ำมันระหว่างเดินทางไกล ต้องสอบถามราคาน้ำมันต่อลิตร สั่งจำนวนลิตร จ่ายเงิน และถามระยะทางไปจุดหมายถัดไป",
+            plotIntroEn = "You stop at a gas station during a road trip to check fuel prices per liter, refuel, pay, and ask the distance to your next stop.",
+            initialDialogues = listOf(
+                DialogueTurn(
+                    id = "gas_turn_1",
+                    speakerIsNpc = true,
+                    textZhSimp = "你好！请问加92号还是95号汽油？今天95号一升八块五，你要加多少升？",
+                    textZhTrad = "你好！請問加92號還是95號汽油？今天95號一升八塊五，你要加多少升？",
+                    pinyin = "Nǐ hǎo! Qǐngwèn jiā jiǔshí'èr hào háishì jiǔshíwǔ hào qìyóu? Jīntiān jiǔshíwǔ hào yì shēng bā kuài wǔ, nǐ yào jiā duōshǎo shēng?",
+                    textTh = "สวัสดีครับ! เติมเบนซิน 92 หรือ 95 ดีครับ วันนี้ 95 ลิตรละ 8.5 หยวน คุณจะเติมกี่ลิตรครับ?",
+                    textEn = "Hello! Would you like 92 or 95 gasoline? Today 95 is 8.5 yuan per liter, how many liters do you want?",
+                    suggestedRepliesSimp = listOf(
+                        "请帮我加三十升95号汽油，一共多少钱？",
+                        "直接加满吧，顺便问一下前面有洗手间吗？"
+                    ),
+                    suggestedRepliesTrad = listOf(
+                        "請幫我加三十升95號汽油，一共多少錢？",
+                        "直接加滿吧，順便問一下前面有洗手間嗎？"
+                    ),
+                    suggestedRepliesPinyin = listOf(
+                        "Qǐng bāng wǒ jiā sānshí shēng jiǔshíwǔ hào qìyóu, yígòng duōshǎo qián?",
+                        "Zhíjiē jiāmǎn ba, shùnbiàn wèn yíxià qiánmiàn yǒu xǐshǒujiān ma?"
+                    ),
+                    suggestedRepliesTh = listOf(
+                        "ช่วยเติมเบนซิน 95 ให้ 30 ลิตร ราคารวมทั้งหมดเท่าไหร่ครับ",
+                        "เติมเต็มถังเลยครับ และขอถามหน่อยว่าข้างหน้ามีห้องน้ำไหม"
+                    ),
+                    audioSpeed = 1.0f,
+                    emotionEmoji = "⛽"
+                ),
+                DialogueTurn(
+                    id = "gas_turn_2",
+                    speakerIsNpc = true,
+                    textZhSimp = "三十升一共二百五十五块，可以扫码支付。洗手间就在便利店旁边。",
+                    textZhTrad = "三十升一共二百五十五塊，可以掃碼支付。洗手間就在便利店旁邊。",
+                    pinyin = "Sānshí shēng yígòng èrbǎi wǔshíwǔ kuài, kěyǐ sǎomǎ zhīfù. Xǐshǒujiān jiù zài biànlìdiàn pángbiān.",
+                    textTh = "30 ลิตร ราคารวม 255 หยวน สแกนจ่ายได้เลยครับ ส่วนห้องน้ำอยู่ข้างๆ ร้านสะดวกซื้อ",
+                    textEn = "30 liters is 255 yuan total, you can scan to pay. The restroom is right next to the convenience store.",
+                    suggestedRepliesSimp = listOf(
+                        "好的，付好了。请问去火车站还有多少公里？还要几分钟到？",
+                        "下午有雷阵雨，前面上高速路滑吗？"
+                    ),
+                    suggestedRepliesTrad = listOf(
+                        "好的，付好了。請問去火車站還有多少公里？還要幾分鐘到？",
+                        "下午有雷陣雨，前面上高速路滑嗎？"
+                    ),
+                    suggestedRepliesPinyin = listOf(
+                        "Hǎo de, fù hǎo le. Qǐngwèn qù huǒchēzhàn hái yǒu duōshǎo gōnglǐ? Hái yào jǐ fēnzhōng dào?",
+                        "Xiàwǔ yǒu léizhènyǔ, qiánmiàn shàng gāosù lù huá ma?"
+                    ),
+                    suggestedRepliesTh = listOf(
+                        "โอเค จ่ายเรียบร้อยครับ ถามหน่อยว่าไปสถานีรถไฟอีกกี่กิโลเมตร และอีกกี่นาทีถึงครับ",
+                        "บ่ายนี้มีฝนฟ้าคะนอง ข้างหน้าขึ้นทางด่วนถนนลื่นไหมครับ"
+                    ),
+                    audioSpeed = 1.0f,
+                    emotionEmoji = "🧭"
+                )
+            ),
+            targetKeyPhrasesSimp = listOf("加多少升", "一升多少钱", "一共多少钱", "还有多少公里", "还要几分钟到"),
+            targetKeyPhrasesTrad = listOf("加多少升", "一升多少錢", "一共多少錢", "還有多少公里", "還要幾分鐘到"),
+            targetKeyPhrasesTh = listOf("เติมกี่ลิตร", "ลิตรละเท่าไหร่", "รวมทั้งหมดเท่าไหร่", "อีกกี่กิโลเมตร", "อีกกี่นาทีถึง")
+        ),
+        CinemaScenario(
+            id = "scenario_hotel_daily_real",
+            category = ScenarioCategory.DAILY_LIVING,
+            titleTh = "ชีวิตประจำวันในโรงแรม: ห้องพัก ห้องน้ำ & อาหาร",
+            titleEn = "Hotel Daily Living: Room, Restroom & Food",
+            titleZhSimp = "酒店生活：住宿、卫生间与餐饮",
+            titleZhTrad = "酒店生活：住宿、衛生間與餐飲",
+            hskLevel = HskLevel.HSK_1,
+            coverImageRes = null,
+            npc = ScenarioNpc(
+                id = "npc_hotel_frontdesk",
+                nameZhSimp = "小陈",
+                nameZhTrad = "小陳",
+                nameTh = "เสี่ยวเฉิน (พนักงานโรงแรม)",
+                roleTitleTh = "เจ้าหน้าที่ต้อนรับโรงแรม",
+                avatarEmoji = "🏨",
+                personalityTh = "สุภาพ ใส่ใจบริการ และช่วยเหลือทุกเรื่องในโรงแรม"
+            ),
+            plotIntroTh = "คุณเข้าพักที่โรงแรมและต้องจัดการเรื่องพื้นฐานในชีวิตประจำวัน ทั้งเช็กอิน แจ้งปัญหาชักโครก/แอร์ สั่งอาหารไม่ใส่ถั่ว และขอความเป็นส่วนตัว",
+            plotIntroEn = "You check into a hotel and handle everyday needs: check-in, reporting a toilet/AC issue, ordering food without peanuts, and requesting privacy.",
+            initialDialogues = listOf(
+                DialogueTurn(
+                    id = "hotel_turn_1",
+                    speakerIsNpc = true,
+                    textZhSimp = "您好，欢迎入住！请问有什么我可以帮您的吗？",
+                    textZhTrad = "您好，歡迎入住！請問有什麼我可以幫您的嗎？",
+                    pinyin = "Nínhǎo, huānyíng rùzhù! Qǐngwèn yǒu shénme wǒ kěyǐ bāng nín de ma?",
+                    textTh = "สวัสดีครับ ยินดีต้อนรับเข้าพักครับ มีอะไรให้ผมช่วยไหมครับ?",
+                    textEn = "Hello, welcome! Is there anything I can help you with?",
+                    suggestedRepliesSimp = listOf(
+                        "你好，房间里的马桶冲不了水，空调也不制冷，麻烦帮我看看。",
+                        "我们想在房间休息，请挂上请勿打扰的牌子。"
+                    ),
+                    suggestedRepliesTrad = listOf(
+                        "你好，房間裡的馬桶沖不了水，空調也不製冷，麻煩幫我看看。",
+                        "我們想在房間休息，請掛上請勿打擾的牌子。"
+                    ),
+                    suggestedRepliesPinyin = listOf(
+                        "Nǐ hǎo, fángjiān lǐ de mǎtǒng chōng bù liǎo shuǐ, kōngtiáo yě bù zhìlěng, máfan bāng wǒ kànkan.",
+                        "Wǒmen xiǎng zài fángjiān xiūxi, qǐng guà shàng qǐng wù dǎrǎo de páizi."
+                    ),
+                    suggestedRepliesTh = listOf(
+                        "สวัสดีครับ ชักโครกในห้องกดน้ำไม่ลง แอร์ก็ไม่เย็น รบกวนช่วยดูให้หน่อยครับ",
+                        "พวกเราอยากพักผ่อนในห้อง รบกวนแขวนป้ายห้ามรบกวนให้ด้วยครับ"
+                    ),
+                    audioSpeed = 0.95f,
+                    emotionEmoji = "🛎️"
+                )
+            ),
+            targetKeyPhrasesSimp = listOf("办理入住", "马桶冲不了水", "请勿打扰", "不要花生"),
+            targetKeyPhrasesTrad = listOf("辦理入住", "馬桶沖不了水", "請勿打擾", "不要花生"),
+            targetKeyPhrasesTh = listOf("เช็กอิน", "ชักโครกกดน้ำไม่ลง", "ห้ามรบกวน", "ไม่ใส่ถั่ว")
         )
+
     )
 
     // 6. Project TOR Human Gates / Production Specification
