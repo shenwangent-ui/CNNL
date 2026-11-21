@@ -7,6 +7,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -14,8 +15,10 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.shenhan.app.model.AuthProvider
 import com.shenhan.app.model.HskLevel
 import com.shenhan.app.model.UserProfile
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 object RealAuthManager {
     // Web Client ID จาก google-services.json (com.shenhan.app)
@@ -27,6 +30,19 @@ object RealAuthManager {
     const val REDIRECT_URI = "shenhan://auth/callback"
 
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    private suspend fun <T> Task<T>.awaitResult(): T =
+        suspendCancellableCoroutine { cont ->
+            addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    cont.resume(task.result)
+                } else {
+                    cont.resumeWithException(
+                        task.exception ?: IllegalStateException("Firebase authentication failed")
+                    )
+                }
+            }
+        }
 
     suspend fun signInWithGoogle(
         context: Context,
@@ -52,7 +68,7 @@ object RealAuthManager {
             ) {
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                 val firebaseCred = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(firebaseCred).await()
+                val authResult = firebaseAuth.signInWithCredential(firebaseCred).awaitResult()
                 val fbUser = authResult.user
                     ?: return Result.failure(IllegalStateException("ไม่พบข้อมูลผู้ใช้จาก Firebase"))
 
@@ -87,9 +103,9 @@ object RealAuthManager {
     ): Result<UserProfile> {
         return try {
             val authResult = if (isRegister) {
-                firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
+                firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).awaitResult()
             } else {
-                firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
+                firebaseAuth.signInWithEmailAndPassword(email.trim(), password).awaitResult()
             }
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ยืนยันตัวตนอีเมลไม่สำเร็จ"))

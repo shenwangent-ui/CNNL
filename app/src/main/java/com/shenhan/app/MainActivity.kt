@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        intent?.data?.let { uri -> RealAuthManager.parseSupabaseCallbackUri(uri)?.let { repository.loginUser(it) } }
+        if (::repository.isInitialized) { intent?.data?.let { uri -> RealAuthManager.parseSupabaseCallbackUri(uri)?.let { repository.loginUser(it) } } }
         enableEdgeToEdge()
 
         audioEngine = AudioEngine(this)
