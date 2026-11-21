@@ -88,7 +88,7 @@ fun ShenHanTopAppBar(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -97,22 +97,25 @@ fun ShenHanTopAppBar(
             ) {
                 // Brand Title with Frosted Purple Gradient Avatar
                 Row(
-            verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.weight(1f).padding(end = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.img_app_icon_1788077123859),
                         contentDescription = "ShenHan App Logo",
             contentScale = ContentScale.Crop,
                         modifier = Modifier.clipToBounds()
-                            .size(38.dp)
+                            .size(34.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .border(1.5.dp, FrostedPurplePrimary, RoundedCornerShape(12.dp))
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "神漢",
+                                maxLines = 1,
+                                softWrap = false,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Black,
                                 color = FrostedPurplePrimary
@@ -120,12 +123,9 @@ fun ShenHanTopAppBar(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "ShenHan",
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Normal,
                                 color = FrostedSlateMuted
@@ -149,6 +149,9 @@ fun ShenHanTopAppBar(
                             }
                             Text(
                                 text = "• Live-Talk",
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = FrostedSlateMuted,
                                 fontSize = 10.sp
@@ -160,7 +163,7 @@ fun ShenHanTopAppBar(
                 // Action controls: 1-Tap Script Switcher, Streak Badge, TOR Gate Specs
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     // 1-Tap Simplified / Traditional Switcher
                     Surface(
@@ -176,7 +179,7 @@ fun ShenHanTopAppBar(
                         color = FrostedGlassWhite60
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp),
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -204,7 +207,7 @@ fun ShenHanTopAppBar(
                         color = Color(0x33FFCC80)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp),
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(

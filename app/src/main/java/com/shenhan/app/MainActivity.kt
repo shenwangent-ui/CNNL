@@ -1,6 +1,7 @@
 package com.shenhan.app
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.CompositionLocalProvider
@@ -91,12 +92,18 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalDensity provides Density(density.density, fontScale = density.fontScale.coerceAtMost(1.15f))
                 ) {
-                    Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                        val d = LocalDensity.current
+                        val autoScale = (maxWidth.value / 395f).coerceIn(0.85f, 1.08f)
+                        CompositionLocalProvider(
+                            LocalDensity provides Density(d.density * autoScale, fontScale = d.fontScale.coerceIn(0.90f, 1.08f))
+                        ) {
                 ShenHanMainApp(
                     repository = appRepository,
                     audioEngine = audioEngine
                 )
                                 }
+                    }
                 }
             }
         }
