@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        if (::repository.isInitialized) { intent?.data?.let { uri -> RealAuthManager.parseSupabaseCallbackUri(uri)?.let { repository.loginUser(it) } } }
+        intent?.data?.let { RealAuthManager.pendingDeepLinkUri = it }
         enableEdgeToEdge()
 
         audioEngine = AudioEngine(this)
@@ -181,6 +181,7 @@ fun ShenHanMainApp(
             }
 
             MainAppFlow.AUTH -> {
+                RealAuthManager.pendingDeepLinkUri?.let { uri -> RealAuthManager.pendingDeepLinkUri = null; RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user -> repository.loginUser(user) } }
                 AuthScreen(
                     placementResult = tempPlacementResult ?: lastPlacementResult,
                     onAuthSuccess = { profile ->

@@ -28,6 +28,7 @@ object RealAuthManager {
     var SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
     var SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
     const val REDIRECT_URI = "shenhan://auth/callback"
+    var pendingDeepLinkUri: Uri? = null
 
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
