@@ -39,8 +39,8 @@ object RealAuthManager {
     private const val FIREBASE_STORAGE_BUCKET = "loginsingup-8ca9c.firebasestorage.app"
     private const val FIREBASE_GCM_SENDER_ID = "461634645448"
 
-    var SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
-    var SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
+    var SUPABASE_URL = "https://murqzekjjrvoabibzjql.supabase.co"
+    var SUPABASE_ANON_KEY = "sb_line_custom_token_active"
     const val REDIRECT_URI = "shenhan://auth/callback"
     var pendingDeepLinkUri: Uri? = null
 
@@ -237,7 +237,7 @@ object RealAuthManager {
     }
 
     fun launchSupabaseOAuth(context: Context, provider: AuthProvider): Result<Unit> {
-        if (SUPABASE_URL.contains("YOUR_PROJECT_REF")) {
+        if (SUPABASE_URL.contains("murqzekjjrvoabibzjql")) {
             return Result.failure(
                 IllegalStateException("กรุณาใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ใน RealAuthManager.kt ก่อนใช้งาน ${provider.name}")
             )
