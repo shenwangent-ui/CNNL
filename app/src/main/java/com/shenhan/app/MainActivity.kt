@@ -163,6 +163,7 @@ fun ShenHanMainApp(
     var selectedNavIndex by remember { mutableIntStateOf(0) }
     var showHumanGatesModal by remember { mutableStateOf(false) }
     var showSubscriptionModal by remember { mutableStateOf(false) }
+    var lineAuthError by remember { mutableStateOf<String?>(null) }
 
     androidx.compose.runtime.LaunchedEffect(RealAuthManager.pendingDeepLinkUri) {
         val uri = RealAuthManager.pendingDeepLinkUri ?: return@LaunchedEffect
@@ -178,6 +179,8 @@ fun ShenHanMainApp(
                 repository.loginUser(user)
                 currentFlow = MainAppFlow.MAIN_NAV
                 selectedNavIndex = 3
+            }.onFailure { err ->
+                lineAuthError = err.localizedMessage ?: err.toString()
             }
         } else {
             RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user ->
@@ -194,6 +197,19 @@ fun ShenHanMainApp(
         Triple("AI Cinema", Icons.Default.Movie, "nav_ai_cinema"),
         Triple("โปรไฟล์", Icons.Default.Person, "nav_profile")
     )
+
+    if (lineAuthError != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { lineAuthError = null },
+            title = { Text("แจ้งเตือน LINE Login") },
+            text = { Text(lineAuthError ?: "") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { lineAuthError = null }) {
+                    Text("ตกลง")
+                }
+            }
+        )
+    }
 
     FrostedCanvasContainer {
         when (currentFlow) {

@@ -132,23 +132,6 @@ fun AuthScreen(
     var successMessage by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
-    androidx.compose.runtime.LaunchedEffect(RealAuthManager.pendingDeepLinkUri) {
-        val uri = RealAuthManager.pendingDeepLinkUri ?: return@LaunchedEffect
-        val customRes = RealAuthManager.completeFirebaseCustomTokenCallback(
-            uri = uri,
-            initialHskLevel = HskLevel.HSK1,
-            dailyGoalMinutes = selectedDailyGoalMinutes
-        )
-        if (customRes != null) {
-            RealAuthManager.pendingDeepLinkUri = null
-            customRes.onSuccess { user ->
-                successMessage = "เข้าสู่ระบบด้วย LINE สำเร็จ!"
-                onAuthSuccess(user)
-            }.onFailure { err ->
-                errorMessage = "LINE Login: ${err.localizedMessage}"
-            }
-        }
-    }
 
     val initialHskLevel = placementResult?.recommendedHskLevel ?: HskLevel.HSK1
 
