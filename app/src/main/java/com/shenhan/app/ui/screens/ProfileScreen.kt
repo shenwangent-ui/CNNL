@@ -1,6 +1,5 @@
 package com.shenhan.app.ui.screens
 
-import com.shenhan.app.model.AuthProvider
 import com.shenhan.app.ui.components.GoogleBrandLogo
 import com.shenhan.app.ui.components.LineBrandLogo
 import com.shenhan.app.ui.components.WeChatBrandLogo
