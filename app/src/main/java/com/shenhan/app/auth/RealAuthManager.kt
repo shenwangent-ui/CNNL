@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.FirebaseApp
+import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
@@ -29,13 +31,41 @@ import kotlin.coroutines.resumeWithException
 
 object RealAuthManager {
     const val FIREBASE_WEB_CLIENT_ID = "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com"
+    private const val FIREBASE_APP_ID = "1:461634645448:android:a79d516c0b80c25dbe24fd"
+    private const val FIREBASE_API_KEY = "AIzaSyA_IsZw0SloF0MAXjz9AJbvUvrUAyOjxj0"
+    private const val FIREBASE_PROJECT_ID = "loginsingup-8ca9c"
+    private const val FIREBASE_STORAGE_BUCKET = "loginsingup-8ca9c.firebasestorage.app"
+    private const val FIREBASE_GCM_SENDER_ID = "461634645448"
 
     var SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
     var SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
     const val REDIRECT_URI = "shenhan://auth/callback"
     var pendingDeepLinkUri: Uri? = null
 
-    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    fun ensureFirebaseInitialized(context: Context): FirebaseApp {
+        val appContext = context.applicationContext
+        val existing = FirebaseApp.getApps(appContext)
+        if (existing.isNotEmpty()) {
+            return existing.first()
+        }
+        FirebaseApp.initializeApp(appContext)?.let { return it }
+
+        val options = FirebaseOptions.Builder()
+            .setApplicationId(FIREBASE_APP_ID)
+            .setApiKey(FIREBASE_API_KEY)
+            .setProjectId(FIREBASE_PROJECT_ID)
+            .setStorageBucket(FIREBASE_STORAGE_BUCKET)
+            .setGcmSenderId(FIREBASE_GCM_SENDER_ID)
+            .build()
+        return FirebaseApp.initializeApp(appContext, options)
+    }
+
+    private fun getAuth(context: Context? = null): FirebaseAuth {
+        if (context != null) {
+            ensureFirebaseInitialized(context)
+        }
+        return FirebaseAuth.getInstance()
+    }
 
     private tailrec fun Context.findActivity(): Activity? = when (this) {
         is Activity -> this
@@ -61,6 +91,7 @@ object RealAuthManager {
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
+        ensureFirebaseInitialized(context)
         val activity = context.findActivity()
             ?: return Result.failure(IllegalStateException("ไม่พบหน้าต่าง Activity สำหรับเปิดหน้าล็อกอิน Google"))
         val credentialManager = CredentialManager.create(activity)
@@ -76,7 +107,7 @@ object RealAuthManager {
                 .addCredentialOption(googleIdOption)
                 .build()
             val result = credentialManager.getCredential(context = activity, request = request)
-            return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
+            return handleGoogleCredential(activity, result.credential, initialHskLevel, dailyGoalMinutes)
         } catch (_: Exception) {
             // ข้ามไปชั้นที่ 2 ทันที
         }
@@ -89,18 +120,18 @@ object RealAuthManager {
                 .addCredentialOption(signInWithGoogleOption)
                 .build()
             val result = credentialManager.getCredential(context = activity, request = request)
-            return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
-        } catch (e: GetCredentialCancellationException) {
-            // หากระบบ Play Services ตัดการทำงานเองหลังกดเลือกบัญชี ให้สลับไปใช้ Firebase Web OAuth ทันที
+            return handleGoogleCredential(activity, result.credential, initialHskLevel, dailyGoalMinutes)
+        } catch (_: GetCredentialCancellationException) {
             return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
-        } catch (e: GetCredentialException) {
+        } catch (_: GetCredentialException) {
             return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
         }
     }
 
     private suspend fun handleGoogleCredential(
+        context: Context,
         credential: Credential,
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
@@ -111,7 +142,7 @@ object RealAuthManager {
             ) {
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                 val firebaseCred = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(firebaseCred).awaitResult()
+                val authResult = getAuth(context).signInWithCredential(firebaseCred).awaitResult()
                 val fbUser = authResult.user
                     ?: return Result.failure(IllegalStateException("ไม่พบข้อมูลผู้ใช้จาก Firebase"))
 
@@ -143,7 +174,7 @@ object RealAuthManager {
     ): Result<UserProfile> {
         return try {
             val provider = OAuthProvider.newBuilder("google.com").build()
-            val authResult = firebaseAuth.startActivityForSignInWithProvider(activity, provider).awaitResult()
+            val authResult = getAuth(activity).startActivityForSignInWithProvider(activity, provider).awaitResult()
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ล็อกอิน Google ไม่สำเร็จ"))
 
@@ -176,10 +207,11 @@ object RealAuthManager {
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
         return try {
+            val auth = FirebaseAuth.getInstance()
             val authResult = if (isRegister) {
-                firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).awaitResult()
+                auth.createUserWithEmailAndPassword(email.trim(), password).awaitResult()
             } else {
-                firebaseAuth.signInWithEmailAndPassword(email.trim(), password).awaitResult()
+                auth.signInWithEmailAndPassword(email.trim(), password).awaitResult()
             }
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ยืนยันตัวตนอีเมลไม่สำเร็จ"))
