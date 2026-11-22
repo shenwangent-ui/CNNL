@@ -1,5 +1,10 @@
 package com.shenhan.app.ui.screens
 
+import androidx.compose.foundation.layout.safeDrawingPadding
+import com.shenhan.app.ui.components.GoogleBrandLogo
+import com.shenhan.app.ui.components.LineBrandLogo
+import com.shenhan.app.ui.components.WeChatBrandLogo
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -535,18 +540,6 @@ fun AuthScreen(
                         onClick = { handleThirdPartyAuth(AuthProvider.GOOGLE) }
                     )
 
-                    // Apple ID Sign In
-                    ThirdPartyLoginButton(
-                        iconEmoji = "🍏",
-                        title = "ดำเนินการต่อด้วย Apple (Sign in with Apple)",
-                        subtitle = "ปลอดภัยด้วยระบบ Apple ID",
-                        containerColor = Color.White,
-                        textColor = Color.Black,
-                        borderColor = Color.Black,
-                        testTag = "login_apple_btn",
-                        onClick = { handleThirdPartyAuth(AuthProvider.APPLE) }
-                    )
-
                     // WeChat / LINE Sign In
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -568,7 +561,7 @@ fun AuthScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
-                                Text(text = "💬", fontSize = 18.sp)
+                                WeChatBrandLogo(size = 22.dp)
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "WeChat (微信)",
@@ -595,7 +588,7 @@ fun AuthScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
-                                Text(text = "🟢", fontSize = 18.sp)
+                                LineBrandLogo(size = 22.dp)
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "LINE Login",
@@ -659,7 +652,7 @@ private fun ThirdPartyLoginButton(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = iconEmoji, fontSize = 22.sp)
+            if (iconEmoji == "🌐") { GoogleBrandLogo(size = 24.dp) } else { Text(text = iconEmoji, fontSize = 22.sp) }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

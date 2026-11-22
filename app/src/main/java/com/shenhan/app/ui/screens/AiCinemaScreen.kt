@@ -220,6 +220,8 @@ fun AiCinemaScreen(
                                 ) {
                                     Text(
                                         text = "AI NPC Online",
+                            maxLines = 1,
+                            softWrap = false,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
