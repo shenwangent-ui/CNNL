@@ -616,7 +616,12 @@ fun ProfileScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = provider.iconEmoji, fontSize = 20.sp)
+                                when (provider) {
+                                    AuthProvider.GOOGLE -> GoogleBrandLogo(size = 24.dp)
+                                    AuthProvider.WECHAT -> WeChatBrandLogo(size = 24.dp)
+                                    AuthProvider.LINE -> LineBrandLogo(size = 24.dp)
+                                    else -> Text(text = provider.iconEmoji, fontSize = 22.sp)
+                                }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
@@ -643,7 +648,7 @@ fun ProfileScreen(
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = FrostedMatchGreenDark
+                                        color = Color(0xFF4ADE80)
                                     )
                                 }
                             } else {
