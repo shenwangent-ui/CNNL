@@ -167,26 +167,28 @@ fun ShenHanMainApp(
 
     androidx.compose.runtime.LaunchedEffect(RealAuthManager.pendingDeepLinkUri) {
         val uri = RealAuthManager.pendingDeepLinkUri ?: return@LaunchedEffect
-        RealAuthManager.pendingDeepLinkUri = null
-        val activePlacement = tempPlacementResult ?: lastPlacementResult
-        val customRes = RealAuthManager.completeFirebaseCustomTokenCallback(
-            uri = uri,
-            initialHskLevel = activePlacement?.recommendedHskLevel ?: com.shenhan.app.model.HskLevel.HSK1,
-            dailyGoalMinutes = activePlacement?.suggestedDailyGoalMinutes ?: 15
-        )
-        if (customRes != null) {
-            customRes.onSuccess { user ->
-                repository.loginUser(user)
-                currentFlow = MainAppFlow.MAIN_NAV
-                selectedNavIndex = 3
-            }.onFailure { err ->
-                lineAuthError = err.localizedMessage ?: err.toString()
-            }
-        } else {
-            RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user ->
-                repository.loginUser(user)
-                currentFlow = MainAppFlow.MAIN_NAV
-                selectedNavIndex = 3
+        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+            val activePlacement = tempPlacementResult ?: lastPlacementResult
+            val customRes = RealAuthManager.completeFirebaseCustomTokenCallback(
+                uri = uri,
+                initialHskLevel = activePlacement?.recommendedHskLevel ?: com.shenhan.app.model.HskLevel.HSK1,
+                dailyGoalMinutes = activePlacement?.suggestedDailyGoalMinutes ?: 15
+            )
+            RealAuthManager.pendingDeepLinkUri = null
+            if (customRes != null) {
+                customRes.onSuccess { user ->
+                    repository.loginUser(user)
+                    currentFlow = MainAppFlow.MAIN_NAV
+                    selectedNavIndex = 3
+                }.onFailure { err ->
+                    lineAuthError = err.localizedMessage ?: err.toString()
+                }
+            } else {
+                RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user ->
+                    repository.loginUser(user)
+                    currentFlow = MainAppFlow.MAIN_NAV
+                    selectedNavIndex = 3
+                }
             }
         }
     }
