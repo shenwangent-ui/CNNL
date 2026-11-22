@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "461634645448",
+    "project_id": "loginsingup-8ca9c",
+    "storage_bucket": "loginsingup-8ca9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461634645448:android:bc6c4a5cfdd857b8be24fd",
+        "android_client_info": {
+          "package_name": "com.compuny.chatchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_IsZw0SloF0MAXjz9AJbvUvrUAyOjxj0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461634645448:android:a79d516c0b80c25dbe24fd",
+        "android_client_info": {
+          "package_name": "com.shenhan.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_IsZw0SloF0MAXjz9AJbvUvrUAyOjxj0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
