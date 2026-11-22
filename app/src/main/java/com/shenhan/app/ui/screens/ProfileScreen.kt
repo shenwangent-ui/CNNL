@@ -1,5 +1,10 @@
 package com.shenhan.app.ui.screens
 
+import com.shenhan.app.model.AuthProvider
+import com.shenhan.app.ui.components.GoogleBrandLogo
+import com.shenhan.app.ui.components.LineBrandLogo
+import com.shenhan.app.ui.components.WeChatBrandLogo
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -602,7 +607,6 @@ fun ProfileScreen(
                     // Providers List
                     listOf(
                         AuthProvider.GOOGLE,
-                        AuthProvider.APPLE,
                         AuthProvider.WECHAT,
                         AuthProvider.LINE
                     ).forEach { provider ->
