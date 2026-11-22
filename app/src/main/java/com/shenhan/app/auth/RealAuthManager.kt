@@ -42,7 +42,10 @@ object RealAuthManager {
     var SUPABASE_URL = "https://murqzekjjrvcabbzjxji.supabase.co"
     var SUPABASE_ANON_KEY = "sb_line_custom_token_active"
     const val REDIRECT_URI = "shenhan://auth/callback"
-    var pendingDeepLinkUri: Uri? = null
+    val pendingDeepLinkState = androidx.compose.runtime.mutableStateOf<Uri?>(null)
+    var pendingDeepLinkUri: Uri?
+        get() = pendingDeepLinkState.value
+        set(value) { pendingDeepLinkState.value = value }
 
     fun ensureFirebaseInitialized(context: Context): FirebaseApp {
         val appContext = context.applicationContext
@@ -180,6 +183,12 @@ object RealAuthManager {
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ล็อกอิน Google ไม่สำเร็จ"))
 
+            try {
+                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                    .setDisplayName(displayName)
+                    .build()
+                fbUser.updateProfile(profileUpdates).awaitResult()
+            } catch (_: Exception) {}
             Result.success(
                 UserProfile(
                     id = fbUser.uid,

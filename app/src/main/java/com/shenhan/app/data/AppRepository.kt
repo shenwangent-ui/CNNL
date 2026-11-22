@@ -26,13 +26,14 @@ class AppRepository(private val context: Context) {
     private val _currentUser = MutableStateFlow<UserProfile?>(
         try {
             com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.let { fbUser ->
+                val isLine = fbUser.uid.startsWith("line_")
                 UserProfile(
                     id = fbUser.uid,
-                    displayName = fbUser.displayName ?: fbUser.email?.substringBefore("@") ?: "ผู้เรียน ShenHan",
-                    email = fbUser.email ?: "",
-                    avatarEmoji = "🌐",
-                    provider = AuthProvider.GOOGLE,
-                    linkedProviders = listOf(AuthProvider.GOOGLE),
+                    displayName = fbUser.displayName ?: if (isLine) "LINE Scholar" else fbUser.email?.substringBefore("@") ?: "ผู้เรียน ShenHan",
+                    email = fbUser.email ?: if (isLine) "${fbUser.uid}@line.shenhan.app" else "",
+                    avatarEmoji = if (isLine) "🟢" else "🌐",
+                    provider = if (isLine) AuthProvider.LINE else AuthProvider.GOOGLE,
+                    linkedProviders = listOf(if (isLine) AuthProvider.LINE else AuthProvider.GOOGLE),
                     startingHskLevel = HskLevel.HSK1,
                     dailyGoalMinutes = 15,
                     isGuest = false

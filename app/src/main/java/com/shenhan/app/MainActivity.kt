@@ -117,6 +117,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.data?.let { RealAuthManager.pendingDeepLinkUri = it }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         audioEngine.shutdown()
@@ -158,6 +164,30 @@ fun ShenHanMainApp(
     var showHumanGatesModal by remember { mutableStateOf(false) }
     var showSubscriptionModal by remember { mutableStateOf(false) }
 
+    androidx.compose.runtime.LaunchedEffect(RealAuthManager.pendingDeepLinkUri) {
+        val uri = RealAuthManager.pendingDeepLinkUri ?: return@LaunchedEffect
+        RealAuthManager.pendingDeepLinkUri = null
+        val activePlacement = tempPlacementResult ?: lastPlacementResult
+        val customRes = RealAuthManager.completeFirebaseCustomTokenCallback(
+            uri = uri,
+            initialHskLevel = activePlacement?.recommendedHskLevel ?: com.shenhan.app.model.HskLevel.HSK1,
+            dailyGoalMinutes = activePlacement?.suggestedDailyGoalMinutes ?: 15
+        )
+        if (customRes != null) {
+            customRes.onSuccess { user ->
+                repository.loginUser(user)
+                currentFlow = MainAppFlow.MAIN_NAV
+                selectedNavIndex = 3
+            }
+        } else {
+            RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user ->
+                repository.loginUser(user)
+                currentFlow = MainAppFlow.MAIN_NAV
+                selectedNavIndex = 3
+            }
+        }
+    }
+
     val navItems = listOf(
         Triple("แผนที่เควสต์", Icons.Default.Map, "nav_quest_map"),
         Triple("ห้องแล็บคำศัพท์", Icons.Default.Science, "nav_vocab_lab"),
@@ -185,7 +215,7 @@ fun ShenHanMainApp(
             }
 
             MainAppFlow.AUTH -> {
-                RealAuthManager.pendingDeepLinkUri?.let { uri -> RealAuthManager.pendingDeepLinkUri = null; RealAuthManager.parseSupabaseCallbackUri(uri)?.let { user -> repository.loginUser(user) } }
+                
                 AuthScreen(
                     placementResult = tempPlacementResult ?: lastPlacementResult,
                     onAuthSuccess = { profile ->
@@ -332,7 +362,7 @@ fun ShenHanMainApp(
                                 onOpenSubscription = { showSubscriptionModal = true },
                                 onOpenHumanGates = { showHumanGatesModal = true },
                                 onRetakePlacementTest = { currentFlow = MainAppFlow.PLACEMENT_TEST },
-                                onSwitchAccount = { currentFlow = MainAppFlow.AUTH },
+                                onSwitchAccount = { repository.logout(); currentFlow = MainAppFlow.AUTH },
                                 onLinkThirdParty = { provider -> repository.linkThirdPartyProvider(provider) }
                             )
                         }
