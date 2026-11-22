@@ -183,12 +183,6 @@ object RealAuthManager {
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ล็อกอิน Google ไม่สำเร็จ"))
 
-            try {
-                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                    .setDisplayName(displayName)
-                    .build()
-                fbUser.updateProfile(profileUpdates).awaitResult()
-            } catch (_: Exception) {}
             Result.success(
                 UserProfile(
                     id = fbUser.uid,
@@ -291,6 +285,12 @@ object RealAuthManager {
             val authResult = getAuth().signInWithCustomToken(firebaseToken).awaitResult()
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ยืนยันตัวตน LINE ผ่าน Firebase ไม่สำเร็จ"))
+            try {
+                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                    .setDisplayName(displayName)
+                    .build()
+                fbUser.updateProfile(profileUpdates).awaitResult()
+            } catch (_: Exception) {}
             Result.success(
                 UserProfile(
                     id = fbUser.uid,
