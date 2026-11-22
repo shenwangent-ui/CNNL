@@ -1,17 +1,23 @@
 package com.shenhan.app.auth
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.net.Uri
 import android.util.Base64
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.OAuthProvider
 import com.shenhan.app.model.AuthProvider
 import com.shenhan.app.model.HskLevel
 import com.shenhan.app.model.UserProfile
@@ -21,16 +27,20 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object RealAuthManager {
-    // Web Client ID จาก google-services.json (com.shenhan.app)
     const val FIREBASE_WEB_CLIENT_ID = "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com"
 
-    // ใส่ค่าจาก Supabase Dashboard -> Project Settings -> API
     var SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
     var SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"
     const val REDIRECT_URI = "shenhan://auth/callback"
     var pendingDeepLinkUri: Uri? = null
 
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    private tailrec fun Context.findActivity(): Activity? = when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 
     private suspend fun <T> Task<T>.awaitResult(): T =
         suspendCancellableCoroutine { cont ->
@@ -50,20 +60,51 @@ object RealAuthManager {
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
-        return try {
-            val credentialManager = CredentialManager.create(context)
+        val credentialManager = CredentialManager.create(context)
+
+        // ชั้นที่ 1: ลองเรียก Google One-Tap Credential
+        try {
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(FIREBASE_WEB_CLIENT_ID)
                 .setAutoSelectEnabled(false)
                 .build()
-
             val request = GetCredentialRequest.Builder()
                 .addCredentialOption(googleIdOption)
                 .build()
-
             val result = credentialManager.getCredential(context = context, request = request)
-            val credential = result.credential
+            return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
+        } catch (e: GetCredentialCancellationException) {
+            return Result.failure(IllegalStateException("ยกเลิกการเลือกบัญชี Google"))
+        } catch (_: Exception) {
+            // ข้ามไปชั้นที่ 2 ทันทีหาก One-Tap ไม่มี credential พร้อมใช้
+        }
+
+        // ชั้นที่ 2: บังคับเด้งหน้าต่างเลือกบัญชี Google ในเครื่องเต็มรูปแบบ (Sign in with Google bottom sheet)
+        try {
+            val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(FIREBASE_WEB_CLIENT_ID)
+                .build()
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(signInWithGoogleOption)
+                .build()
+            val result = credentialManager.getCredential(context = context, request = request)
+            return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
+        } catch (e: GetCredentialCancellationException) {
+            return Result.failure(IllegalStateException("ยกเลิกการเลือกบัญชี Google"))
+        } catch (e: NoCredentialException) {
+            // ชั้นที่ 3: เปิดหน้าล็อกอิน Google OAuth ผ่าน Firebase โดยตรง (ใช้ได้แม้ Play Services ยังไม่อัปเดต SHA-1)
+            return signInWithGoogleWebFallback(context, initialHskLevel, dailyGoalMinutes)
+        } catch (e: Exception) {
+            return signInWithGoogleWebFallback(context, initialHskLevel, dailyGoalMinutes)
+        }
+    }
+
+    private suspend fun handleGoogleCredential(
+        credential: androidx.credentials.Credential,
+        initialHskLevel: HskLevel,
+        dailyGoalMinutes: Int
+    ): Result<UserProfile> {
+        return try {
             if (credential is CustomCredential &&
                 credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
             ) {
@@ -91,6 +132,39 @@ object RealAuthManager {
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun signInWithGoogleWebFallback(
+        context: Context,
+        initialHskLevel: HskLevel,
+        dailyGoalMinutes: Int
+    ): Result<UserProfile> {
+        return try {
+            val activity = context.findActivity()
+                ?: return Result.failure(IllegalStateException("ไม่พบหน้าต่าง Activity สำหรับเปิดหน้าล็อกอิน Google"))
+            val provider = OAuthProvider.newBuilder("google.com").build()
+            val authResult = firebaseAuth.startActivityForSignInWithProvider(activity, provider).awaitResult()
+            val fbUser = authResult.user
+                ?: return Result.failure(IllegalStateException("ล็อกอิน Google ไม่สำเร็จ"))
+
+            Result.success(
+                UserProfile(
+                    id = fbUser.uid,
+                    displayName = fbUser.displayName ?: fbUser.email?.substringBefore("@") ?: "Google Scholar",
+                    email = fbUser.email ?: "",
+                    avatarEmoji = "🌐",
+                    provider = AuthProvider.GOOGLE,
+                    linkedProviders = listOf(AuthProvider.GOOGLE),
+                    startingHskLevel = initialHskLevel,
+                    dailyGoalMinutes = dailyGoalMinutes,
+                    isGuest = false
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(
+                IllegalStateException("กรุณาเปิด Enable Google ใน Firebase Console -> Authentication (${e.localizedMessage})")
+            )
         }
     }
 

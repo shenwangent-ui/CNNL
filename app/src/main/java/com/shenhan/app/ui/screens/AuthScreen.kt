@@ -530,7 +530,8 @@ fun AuthScreen(
                         subtitle = "ซิงก์ข้อมูลผ่านบัญชี Google Account",
                         containerColor = Color(0xFFF8FAFC),
                         borderColor = Color(0xFFCBD5E1),
-                        testTag = "login_google_btn",
+                        textColor = Color.Black,
+            testTag = "login_google_btn",
                         onClick = { handleThirdPartyAuth(AuthProvider.GOOGLE) }
                     )
 
