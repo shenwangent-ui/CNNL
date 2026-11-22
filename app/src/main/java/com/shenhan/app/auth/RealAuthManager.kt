@@ -279,7 +279,7 @@ object RealAuthManager {
         val firebaseToken = uri.getQueryParameter("firebase_token") ?: return null
         val displayName = uri.getQueryParameter("name") ?: "LINE Scholar"
         return try {
-            val authResult = firebaseAuth.signInWithCustomToken(firebaseToken).awaitResult()
+            val authResult = getAuth().signInWithCustomToken(firebaseToken).awaitResult()
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ยืนยันตัวตน LINE ผ่าน Firebase ไม่สำเร็จ"))
             Result.success(

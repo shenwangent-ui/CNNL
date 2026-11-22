@@ -136,7 +136,7 @@ fun AuthScreen(
         val uri = RealAuthManager.pendingDeepLinkUri ?: return@LaunchedEffect
         val customRes = RealAuthManager.completeFirebaseCustomTokenCallback(
             uri = uri,
-            initialHskLevel = initialHskLevel,
+            initialHskLevel = placementResult?.recommendedLevel ?: HskLevel.HSK1,
             dailyGoalMinutes = selectedDailyGoalMinutes
         )
         if (customRes != null) {
@@ -169,7 +169,7 @@ fun AuthScreen(
                 password = passwordInput,
                 displayName = nameInput,
                 isRegister = isRegister,
-                initialHskLevel = initialHskLevel,
+                initialHskLevel = placementResult?.recommendedLevel ?: HskLevel.HSK1,
                 dailyGoalMinutes = selectedDailyGoalMinutes
             )
             res.onSuccess { user ->
@@ -187,7 +187,7 @@ fun AuthScreen(
             authScope.launch {
                 val res = RealAuthManager.signInWithGoogle(
                     context = context,
-                    initialHskLevel = initialHskLevel,
+                    initialHskLevel = placementResult?.recommendedLevel ?: HskLevel.HSK1,
                     dailyGoalMinutes = selectedDailyGoalMinutes
                 )
                 res.onSuccess { user ->
