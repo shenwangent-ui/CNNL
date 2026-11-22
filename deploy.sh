@@ -40,5 +40,6 @@ if adb devices | grep -w "device" >/dev/null 2>&1; then
   adb install -r -d /storage/emulated/0/Download/ShenHan-debug.apk || (adb uninstall "$PKG_NAME" 2>/dev/null || true; adb install /storage/emulated/0/Download/ShenHan-debug.apk)
   echo "🎉 อัปเดตแอป ShenHan เสร็จสมบูรณ์พร้อมใช้งาน!"
 else
-  echo "⚠️ ยังไม่ได้เชื่อมต่อ Wireless ADB (ไฟล์พร้อมติดตั้งอยู่ที่ Download/ShenHan-debug.apk)"
+  echo "📲 กำลังเปิดหน้าต่างติดตั้ง ShenHan-debug.apk บนเครื่อง..."
+    termux-open /storage/emulated/0/Download/ShenHan-debug.apk 2>/dev/null || am start -a android.intent.action.VIEW -d "file:///storage/emulated/0/Download/ShenHan-debug.apk" -t "application/vnd.android.package-archive" 2>/dev/null || echo "⚠️ เปิดไฟล์ที่ Download/ShenHan-debug.apk เพื่อติดตั้ง"
 fi

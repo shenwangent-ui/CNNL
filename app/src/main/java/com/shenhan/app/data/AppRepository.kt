@@ -24,17 +24,23 @@ class AppRepository(private val context: Context) {
 
     // User Profile & Authentication State
     private val _currentUser = MutableStateFlow<UserProfile?>(
-        UserProfile(
-            id = "user_default_01",
-            displayName = "หลี่หยาง (Li Yang)",
-            email = "learner@shenhan.app",
-            avatarEmoji = "🐼",
-            provider = AuthProvider.GOOGLE,
-            linkedProviders = listOf(AuthProvider.GOOGLE, AuthProvider.EMAIL),
-            startingHskLevel = HskLevel.HSK2,
-            dailyGoalMinutes = 15,
-            isGuest = false
-        )
+        try {
+            com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.let { fbUser ->
+                UserProfile(
+                    id = fbUser.uid,
+                    displayName = fbUser.displayName ?: fbUser.email?.substringBefore("@") ?: "ผู้เรียน ShenHan",
+                    email = fbUser.email ?: "",
+                    avatarEmoji = "🌐",
+                    provider = AuthProvider.GOOGLE,
+                    linkedProviders = listOf(AuthProvider.GOOGLE),
+                    startingHskLevel = HskLevel.HSK1,
+                    dailyGoalMinutes = 15,
+                    isGuest = false
+                )
+            }
+        } catch (_: Exception) {
+            null
+        }
     )
     val currentUser: StateFlow<UserProfile?> = _currentUser.asStateFlow()
 
@@ -57,28 +63,28 @@ class AppRepository(private val context: Context) {
     val subscriptionTier: StateFlow<SubscriptionTier> = _subscriptionTier.asStateFlow()
 
     // User Progress & Gamification
-    private val _streakDays = MutableStateFlow(7)
+    private val _streakDays = MutableStateFlow(0)
     val streakDays: StateFlow<Int> = _streakDays.asStateFlow()
 
-    private val _isCheckedInToday = MutableStateFlow(true)
+    private val _isCheckedInToday = MutableStateFlow(false)
     val isCheckedInToday: StateFlow<Boolean> = _isCheckedInToday.asStateFlow()
 
-    private val _userXp = MutableStateFlow(1420)
+    private val _userXp = MutableStateFlow(0)
     val userXp: StateFlow<Int> = _userXp.asStateFlow()
 
-    private val _userLevel = MutableStateFlow(4)
+    private val _userLevel = MutableStateFlow(1)
     val userLevel: StateFlow<Int> = _userLevel.asStateFlow()
 
     // HSK Readiness Radar
     private val _readinessScore = MutableStateFlow(
         HskReadinessScore(
-            overallScore = 84,
-            listeningScore = 88,
+            overallScore = 0,
+            listeningScore = 0,
             speakingToneScore = 82,
-            readingScore = 86,
-            vocabMasteryScore = 80,
+            readingScore = 0,
+            vocabMasteryScore = 0,
             targetHskLevel = HskLevel.HSK3,
-            readinessPercentage = 84
+            readinessPercentage = 0
         )
     )
     val readinessScore: StateFlow<HskReadinessScore> = _readinessScore.asStateFlow()
@@ -215,7 +221,13 @@ class AppRepository(private val context: Context) {
     }
 
     fun logout() {
+        try {
+            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+        } catch (_: Exception) {}
         _currentUser.value = null
+        _userXp.value = 0
+        _userLevel.value = 1
+        _streakDays.value = 0
     }
 
     fun linkThirdPartyProvider(provider: AuthProvider) {

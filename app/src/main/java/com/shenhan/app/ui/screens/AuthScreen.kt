@@ -139,44 +139,48 @@ fun AuthScreen(
             errorMessage = "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"
             return
         }
-
-        val displayName = if (nameInput.isNotBlank()) nameInput else emailInput.substringBefore("@")
-        val user = UserProfile(
-            id = "user_${System.currentTimeMillis()}",
-            displayName = displayName,
-            email = emailInput,
-            avatarEmoji = if (authMode == AuthScreenMode.REGISTER) "🎓" else "🐼",
-            provider = AuthProvider.EMAIL,
-            linkedProviders = listOf(AuthProvider.EMAIL),
-            startingHskLevel = initialHskLevel,
-            dailyGoalMinutes = selectedDailyGoalMinutes,
-            isGuest = false
-        )
-        successMessage = if (authMode == AuthScreenMode.REGISTER) "สมัครสมาชิกสำเร็จ ยินดีต้อนรับ!" else "เข้าสู่ระบบสำเร็จ!"
-        onAuthSuccess(user)
+        errorMessage = null
+        val isRegister = authMode == AuthScreenMode.REGISTER
+        authScope.launch {
+            val res = RealAuthManager.signInWithEmailPassword(
+                email = emailInput,
+                password = passwordInput,
+                displayName = nameInput,
+                isRegister = isRegister,
+                initialHskLevel = initialHskLevel,
+                dailyGoalMinutes = selectedDailyGoalMinutes
+            )
+            res.onSuccess { user ->
+                successMessage = if (isRegister) "สมัครสมาชิกสำเร็จ!" else "เข้าสู่ระบบสำเร็จ!"
+                onAuthSuccess(user)
+            }.onFailure { err ->
+                errorMessage = "อีเมล/รหัสผ่าน: ${err.localizedMessage ?: "ยืนยันตัวตนไม่สำเร็จ"}"
+            }
+        }
     }
 
     fun handleThirdPartyAuth(provider: AuthProvider) {
-        val (mockName, mockEmail, mockEmoji) = when (provider) {
-            AuthProvider.GOOGLE -> Triple("Google User", "user@gmail.com", "🌐")
-            AuthProvider.APPLE -> Triple("Apple ID Member", "user@icloud.com", "🍏")
-            AuthProvider.WECHAT -> Triple("WeChat จอมยุทธ์", "wechat_user_88", "💬")
-            AuthProvider.LINE -> Triple("LINE Member", "line_user_th", "🟢")
-            else -> Triple("ShenHan Scholar", "user@shenhan.app", "🐼")
+        errorMessage = null
+        if (provider == AuthProvider.GOOGLE) {
+            authScope.launch {
+                val res = RealAuthManager.signInWithGoogle(
+                    context = context,
+                    initialHskLevel = initialHskLevel,
+                    dailyGoalMinutes = selectedDailyGoalMinutes
+                )
+                res.onSuccess { user ->
+                    successMessage = "เข้าสู่ระบบด้วย Google สำเร็จ!"
+                    onAuthSuccess(user)
+                }.onFailure { err ->
+                    errorMessage = "Google Sign-In: ${err.localizedMessage ?: "กรุณาเปิดใช้ Google ใน Firebase Authentication"}"
+                }
+            }
+        } else {
+            val res = RealAuthManager.launchSupabaseOAuth(context, provider)
+            res.onFailure { err ->
+                errorMessage = err.localizedMessage
+            }
         }
-
-        val user = UserProfile(
-            id = "auth_${provider.name.lowercase()}_${System.currentTimeMillis()}",
-            displayName = mockName,
-            email = mockEmail,
-            avatarEmoji = mockEmoji,
-            provider = provider,
-            linkedProviders = listOf(provider),
-            startingHskLevel = initialHskLevel,
-            dailyGoalMinutes = selectedDailyGoalMinutes,
-            isGuest = false
-        )
-        onAuthSuccess(user)
     }
 
     LazyColumn(
