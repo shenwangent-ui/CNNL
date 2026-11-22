@@ -31,7 +31,7 @@ import kotlin.coroutines.resumeWithException
 
 object RealAuthManager {
     const val LINE_CHANNEL_ID = "2012749518"
-    const val LINE_CALLBACK_URL = "https://murqzekjjrvoabibzjql.supabase.co/functions/v1/line-auth"
+    const val LINE_CALLBACK_URL = "https://murqzekjjrvcabbzjxji.supabase.co/functions/v1/line-auth"
     const val FIREBASE_WEB_CLIENT_ID = "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com"
     private const val FIREBASE_APP_ID = "1:461634645448:android:a79d516c0b80c25dbe24fd"
     private const val FIREBASE_API_KEY = "AIzaSyA_IsZw0SloF0MAXjz9AJbvUvrUAyOjxj0"
@@ -39,7 +39,7 @@ object RealAuthManager {
     private const val FIREBASE_STORAGE_BUCKET = "loginsingup-8ca9c.firebasestorage.app"
     private const val FIREBASE_GCM_SENDER_ID = "461634645448"
 
-    var SUPABASE_URL = "https://murqzekjjrvoabibzjql.supabase.co"
+    var SUPABASE_URL = "https://murqzekjjrvcabbzjxji.supabase.co"
     var SUPABASE_ANON_KEY = "sb_line_custom_token_active"
     const val REDIRECT_URI = "shenhan://auth/callback"
     var pendingDeepLinkUri: Uri? = null
@@ -237,7 +237,7 @@ object RealAuthManager {
     }
 
     fun launchSupabaseOAuth(context: Context, provider: AuthProvider): Result<Unit> {
-        if (false && (SUPABASE_URL.contains("murqzekjjrvoabibzjql"))) {
+        if (false && (SUPABASE_URL.contains("murqzekjjrvcabbzjxji"))) {
             return Result.failure(
                 IllegalStateException("กรุณาใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ใน RealAuthManager.kt ก่อนใช้งาน ${provider.name}")
             )
