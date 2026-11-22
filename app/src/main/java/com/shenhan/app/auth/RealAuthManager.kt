@@ -30,6 +30,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object RealAuthManager {
+    const val LINE_CHANNEL_ID = "2012749518"
+    const val LINE_CALLBACK_URL = "https://murqzekjjrvoabibzjql.supabase.co/functions/v1/line-auth"
     const val FIREBASE_WEB_CLIENT_ID = "461634645448-j40vrgt7n3o1pu9coo51sn8r0ojvisrv.apps.googleusercontent.com"
     private const val FIREBASE_APP_ID = "1:461634645448:android:a79d516c0b80c25dbe24fd"
     private const val FIREBASE_API_KEY = "AIzaSyA_IsZw0SloF0MAXjz9AJbvUvrUAyOjxj0"
@@ -246,15 +248,56 @@ object RealAuthManager {
             AuthProvider.WECHAT -> "wechat"
             else -> "google"
         }
-        val authUrl = Uri.parse("$SUPABASE_URL/auth/v1/authorize")
-            .buildUpon()
-            .appendQueryParameter("provider", providerSlug)
-            .appendQueryParameter("redirect_to", REDIRECT_URI)
-            .build()
+        val authUrl = if (provider == AuthProvider.LINE) {
+            Uri.parse("https://access.line.me/oauth2/v2.1/authorize")
+                .buildUpon()
+                .appendQueryParameter("response_type", "code")
+                .appendQueryParameter("client_id", LINE_CHANNEL_ID)
+                .appendQueryParameter("redirect_uri", LINE_CALLBACK_URL)
+                .appendQueryParameter("state", "shenhan_${System.currentTimeMillis()}")
+                .appendQueryParameter("scope", "profile openid email")
+                .build()
+        } else {
+            Uri.parse("$SUPABASE_URL/auth/v1/authorize")
+                .buildUpon()
+                .appendQueryParameter("provider", providerSlug)
+                .appendQueryParameter("redirect_to", REDIRECT_URI)
+                .build()
+        }
 
         val customTabs = CustomTabsIntent.Builder().setShowTitle(true).build()
         customTabs.launchUrl(context, authUrl)
         return Result.success(Unit)
+    }
+
+    suspend fun completeFirebaseCustomTokenCallback(
+        uri: Uri,
+        initialHskLevel: HskLevel = HskLevel.HSK1,
+        dailyGoalMinutes: Int = 15
+    ): Result<UserProfile>? {
+        if (uri.scheme != "shenhan" || uri.host != "auth") return null
+        val firebaseToken = uri.getQueryParameter("firebase_token") ?: return null
+        val displayName = uri.getQueryParameter("name") ?: "LINE Scholar"
+        return try {
+            val authResult = firebaseAuth.signInWithCustomToken(firebaseToken).awaitResult()
+            val fbUser = authResult.user
+                ?: return Result.failure(IllegalStateException("ยืนยันตัวตน LINE ผ่าน Firebase ไม่สำเร็จ"))
+            Result.success(
+                UserProfile(
+                    id = fbUser.uid,
+                    displayName = displayName,
+                    email = fbUser.email ?: "${fbUser.uid}@line.shenhan.app",
+                    avatarEmoji = "🟢",
+                    provider = AuthProvider.LINE,
+                    linkedProviders = listOf(AuthProvider.LINE),
+                    startingHskLevel = initialHskLevel,
+                    dailyGoalMinutes = dailyGoalMinutes,
+                    isGuest = false
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     fun parseSupabaseCallbackUri(
