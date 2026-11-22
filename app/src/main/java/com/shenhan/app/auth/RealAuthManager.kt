@@ -6,11 +6,12 @@ import android.content.ContextWrapper
 import android.net.Uri
 import android.util.Base64
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.NoCredentialException
+import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
@@ -60,9 +61,11 @@ object RealAuthManager {
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
-        val credentialManager = CredentialManager.create(context)
+        val activity = context.findActivity()
+            ?: return Result.failure(IllegalStateException("ไม่พบหน้าต่าง Activity สำหรับเปิดหน้าล็อกอิน Google"))
+        val credentialManager = CredentialManager.create(activity)
 
-        // ชั้นที่ 1: ลองเรียก Google One-Tap Credential
+        // ชั้นที่ 1: เรียก Google One-Tap Credential ด้วย Activity จริง
         try {
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
@@ -72,35 +75,33 @@ object RealAuthManager {
             val request = GetCredentialRequest.Builder()
                 .addCredentialOption(googleIdOption)
                 .build()
-            val result = credentialManager.getCredential(context = context, request = request)
+            val result = credentialManager.getCredential(context = activity, request = request)
             return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
-        } catch (e: GetCredentialCancellationException) {
-            return Result.failure(IllegalStateException("ยกเลิกการเลือกบัญชี Google"))
         } catch (_: Exception) {
-            // ข้ามไปชั้นที่ 2 ทันทีหาก One-Tap ไม่มี credential พร้อมใช้
+            // ข้ามไปชั้นที่ 2 ทันที
         }
 
-        // ชั้นที่ 2: บังคับเด้งหน้าต่างเลือกบัญชี Google ในเครื่องเต็มรูปแบบ (Sign in with Google bottom sheet)
+        // ชั้นที่ 2: เรียกหน้าต่างเลือกบัญชี Google เต็มรูปแบบด้วย Activity จริง
         try {
             val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(FIREBASE_WEB_CLIENT_ID)
                 .build()
             val request = GetCredentialRequest.Builder()
                 .addCredentialOption(signInWithGoogleOption)
                 .build()
-            val result = credentialManager.getCredential(context = context, request = request)
+            val result = credentialManager.getCredential(context = activity, request = request)
             return handleGoogleCredential(result.credential, initialHskLevel, dailyGoalMinutes)
         } catch (e: GetCredentialCancellationException) {
-            return Result.failure(IllegalStateException("ยกเลิกการเลือกบัญชี Google"))
-        } catch (e: NoCredentialException) {
-            // ชั้นที่ 3: เปิดหน้าล็อกอิน Google OAuth ผ่าน Firebase โดยตรง (ใช้ได้แม้ Play Services ยังไม่อัปเดต SHA-1)
-            return signInWithGoogleWebFallback(context, initialHskLevel, dailyGoalMinutes)
+            // หากระบบ Play Services ตัดการทำงานเองหลังกดเลือกบัญชี ให้สลับไปใช้ Firebase Web OAuth ทันที
+            return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
+        } catch (e: GetCredentialException) {
+            return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
         } catch (e: Exception) {
-            return signInWithGoogleWebFallback(context, initialHskLevel, dailyGoalMinutes)
+            return signInWithGoogleWebFallback(activity, initialHskLevel, dailyGoalMinutes)
         }
     }
 
     private suspend fun handleGoogleCredential(
-        credential: androidx.credentials.Credential,
+        credential: Credential,
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
@@ -136,13 +137,11 @@ object RealAuthManager {
     }
 
     private suspend fun signInWithGoogleWebFallback(
-        context: Context,
+        activity: Activity,
         initialHskLevel: HskLevel,
         dailyGoalMinutes: Int
     ): Result<UserProfile> {
         return try {
-            val activity = context.findActivity()
-                ?: return Result.failure(IllegalStateException("ไม่พบหน้าต่าง Activity สำหรับเปิดหน้าล็อกอิน Google"))
             val provider = OAuthProvider.newBuilder("google.com").build()
             val authResult = firebaseAuth.startActivityForSignInWithProvider(activity, provider).awaitResult()
             val fbUser = authResult.user
@@ -163,7 +162,7 @@ object RealAuthManager {
             )
         } catch (e: Exception) {
             Result.failure(
-                IllegalStateException("กรุณาเปิด Enable Google ใน Firebase Console -> Authentication (${e.localizedMessage})")
+                IllegalStateException("Google Sign-In: ${e.localizedMessage ?: "กรุณาเช็กการเปิดใช้ Google ใน Firebase Authentication"}")
             )
         }
     }
