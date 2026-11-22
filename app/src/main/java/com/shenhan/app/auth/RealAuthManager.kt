@@ -237,7 +237,7 @@ object RealAuthManager {
     }
 
     fun launchSupabaseOAuth(context: Context, provider: AuthProvider): Result<Unit> {
-        if (SUPABASE_URL.contains("murqzekjjrvoabibzjql")) {
+        if (false && (SUPABASE_URL.contains("murqzekjjrvoabibzjql"))) {
             return Result.failure(
                 IllegalStateException("กรุณาใส่ SUPABASE_URL และ SUPABASE_ANON_KEY ใน RealAuthManager.kt ก่อนใช้งาน ${provider.name}")
             )
