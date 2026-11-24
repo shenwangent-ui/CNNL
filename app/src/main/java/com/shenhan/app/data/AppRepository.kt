@@ -22,6 +22,43 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class AppRepository(private val context: Context) {
 
+    private val profilePrefs by lazy {
+        context.getSharedPreferences("shenhan_profile_prefs", Context.MODE_PRIVATE)
+    }
+
+    private fun resolveProfileState(base: UserProfile, isFreshLogin: Boolean): UserProfile {
+        val uid = base.id
+        val savedCustomId = profilePrefs.getString("custom_id_$uid", null) ?: ""
+        val savedIdChanged = profilePrefs.getBoolean("id_changed_$uid", false)
+        val firebasePhoto = runCatching {
+            com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.photoUrl?.toString()
+        }.getOrNull()
+
+        return if (isFreshLogin) {
+            val latestPhoto = base.avatarUrl?.takeIf { it.isNotBlank() } ?: firebasePhoto
+            profilePrefs.edit()
+                .putString("custom_name_$uid", base.displayName)
+                .apply {
+                    if (!latestPhoto.isNullOrBlank()) putString("avatar_url_$uid", latestPhoto)
+                }
+                .apply()
+            base.copy(
+                avatarUrl = latestPhoto,
+                customId = savedCustomId.ifBlank { base.customId },
+                idChanged = savedIdChanged || base.idChanged
+            )
+        } else {
+            val savedName = profilePrefs.getString("custom_name_$uid", null)?.takeIf { it.isNotBlank() }
+            val savedPhoto = profilePrefs.getString("avatar_url_$uid", null)?.takeIf { it.isNotBlank() }
+            base.copy(
+                displayName = savedName ?: base.displayName,
+                avatarUrl = base.avatarUrl?.takeIf { it.isNotBlank() } ?: firebasePhoto ?: savedPhoto,
+                customId = savedCustomId.ifBlank { base.customId },
+                idChanged = savedIdChanged || base.idChanged
+            )
+        }
+    }
+
     // User Profile & Authentication State
     private val _currentUser = MutableStateFlow<UserProfile?>(
         try {
@@ -34,10 +71,11 @@ class AppRepository(private val context: Context) {
                     avatarEmoji = if (isLine) "🟢" else "🌐",
                     provider = if (isLine) AuthProvider.LINE else AuthProvider.GOOGLE,
                     linkedProviders = listOf(if (isLine) AuthProvider.LINE else AuthProvider.GOOGLE),
+                    avatarUrl = fbUser.photoUrl?.toString(),
                     startingHskLevel = HskLevel.HSK1,
                     dailyGoalMinutes = 15,
                     isGuest = false
-                )
+                ).let { resolveProfileState(it, isFreshLogin = false) }
             }
         } catch (_: Exception) {
             null
@@ -201,8 +239,55 @@ class AppRepository(private val context: Context) {
 
     // Authentication & Profile Actions
     fun loginUser(profile: UserProfile) {
-        _currentUser.value = profile
+        _currentUser.value = resolveProfileState(profile, isFreshLogin = true)
         _hasCompletedPlacement.value = true
+    }
+
+    fun updateUserProfile(newDisplayName: String, newCustomId: String?): Result<UserProfile> {
+        val current = _currentUser.value
+            ?: return Result.failure(IllegalStateException("ไม่พบข้อมูลบัญชีผู้ใช้"))
+        val cleanName = newDisplayName.trim()
+        if (cleanName.isBlank()) {
+            return Result.failure(IllegalArgumentException("กรุณากรอกชื่อที่ต้องการแสดง"))
+        }
+
+        var nextCustomId = current.customId
+        var nextIdChanged = current.idChanged
+        val requestedId = newCustomId?.trim().orEmpty()
+
+        if (requestedId.isNotEmpty() && requestedId != current.effectiveId) {
+            if (current.idChanged) {
+                return Result.failure(IllegalStateException("คุณใช้สิทธิ์เปลี่ยนไอดีครบ 1 ครั้งแล้ว"))
+            }
+            if (!requestedId.matches(Regex("^[a-zA-Z0-9._]{4,20}$"))) {
+                return Result.failure(IllegalArgumentException("ไอดีต้องมี 4-20 ตัวอักษร (a-z, 0-9, _ หรือ .)"))
+            }
+            nextCustomId = requestedId
+            nextIdChanged = true
+        }
+
+        val editor = profilePrefs.edit()
+            .putString("custom_name_${current.id}", cleanName)
+        if (nextIdChanged) {
+            editor.putString("custom_id_${current.id}", nextCustomId)
+            editor.putBoolean("id_changed_${current.id}", true)
+        }
+        editor.apply()
+
+        val updated = current.copy(
+            displayName = cleanName,
+            customId = nextCustomId,
+            idChanged = nextIdChanged
+        )
+        _currentUser.value = updated
+
+        runCatching {
+            val req = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                .setDisplayName(cleanName)
+                .build()
+            com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.updateProfile(req)
+        }
+        return Result.success(updated)
     }
 
     fun continueAsGuest() {

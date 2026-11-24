@@ -281,14 +281,18 @@ object RealAuthManager {
         if (uri.scheme != "shenhan" || uri.host != "auth") return null
         val firebaseToken = uri.getQueryParameter("firebase_token") ?: return null
         val displayName = uri.getQueryParameter("name") ?: "LINE Scholar"
+        val pictureUrl = uri.getQueryParameter("picture")?.takeIf { it.isNotBlank() }
         return try {
             val authResult = getAuth().signInWithCustomToken(firebaseToken).awaitResult()
             val fbUser = authResult.user
                 ?: return Result.failure(IllegalStateException("ยืนยันตัวตน LINE ผ่าน Firebase ไม่สำเร็จ"))
             try {
-                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                val profileBuilder = com.google.firebase.auth.UserProfileChangeRequest.Builder()
                     .setDisplayName(displayName)
-                    .build()
+                if (pictureUrl != null) {
+                    profileBuilder.setPhotoUri(Uri.parse(pictureUrl))
+                }
+                val profileUpdates = profileBuilder.build()
                 fbUser.updateProfile(profileUpdates).awaitResult()
             } catch (_: Exception) {}
             Result.success(
@@ -297,6 +301,7 @@ object RealAuthManager {
                     displayName = displayName,
                     email = fbUser.email ?: "${fbUser.uid}@line.shenhan.app",
                     avatarEmoji = "🟢",
+                    avatarUrl = pictureUrl ?: fbUser.photoUrl?.toString(),
                     provider = AuthProvider.LINE,
                     linkedProviders = listOf(AuthProvider.LINE),
                     startingHskLevel = initialHskLevel,

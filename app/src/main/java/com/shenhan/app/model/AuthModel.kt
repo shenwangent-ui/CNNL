@@ -14,13 +14,25 @@ data class UserProfile(
     val displayName: String,
     val email: String,
     val avatarEmoji: String = "🐼",
+    val avatarUrl: String? = null,
+    val customId: String = "",
+    val idChanged: Boolean = false,
     val provider: AuthProvider = AuthProvider.EMAIL,
     val linkedProviders: List<AuthProvider> = listOf(AuthProvider.EMAIL),
     val startingHskLevel: HskLevel = HskLevel.HSK1,
     val dailyGoalMinutes: Int = 15,
     val createdAtFormatted: String = "ส.ค. 2026",
     val isGuest: Boolean = false
-)
+) {
+    val effectiveId: String
+        get() = customId.ifBlank {
+            id.removePrefix("line:")
+                .removePrefix("wechat:")
+                .removePrefix("google:")
+                .take(12)
+                .ifBlank { "scholar" }
+        }
+}
 
 enum class AuthScreenMode {
     LOGIN,
