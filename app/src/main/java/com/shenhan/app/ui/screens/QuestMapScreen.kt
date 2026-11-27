@@ -719,8 +719,6 @@ fun QuestMapScreen(
             }
         )
     }
-}
-
 
     // Audio Dialogue Practice Modal
     if (activeDialogueNode != null) {
@@ -797,6 +795,9 @@ fun QuestMapScreen(
             )
         }
     }
+
+}
+
 
 @Composable
 fun QuestNodeCard(
