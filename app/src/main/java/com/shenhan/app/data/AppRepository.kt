@@ -36,7 +36,7 @@ class AppRepository(private val context: Context) {
                 nodes = zone.nodes.mapIndexed { nIdx, node ->
                     node.copy(
                         starsEarned = 0,
-                        isUnlocked = (zIdx == 0 && nIdx == 0),
+                        isUnlocked = (zone.id == "zone_favorite") || (zIdx == 0 && nIdx == 0),
                         isCurrent = (zIdx == 0 && nIdx == 0)
                     )
                 }

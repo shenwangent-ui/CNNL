@@ -609,6 +609,143 @@ object SampleData {
     // 3. Quest Map Zones & Nodes
     val questZones = listOf(
         QuestZone(
+            id = "zone_favorite",
+            title = "⚡ ทันใจ: ใช้ชีวิตจริงในจีน 100% (ไปจนกลับไท่กั๋ว)",
+            chineseTitle = "速成生存：中国生活全攻略",
+            subtitle = "จบหมวดเดียวใช้ชีวิตในจีนได้ครบ ตั้งแต่จองตั๋วเข้าจีนจนบินกลับไทย",
+            hskLevel = HskLevel.HSK1,
+            isUnlocked = true,
+            nodes = listOf(
+                QuestNode(
+                    id = "fav_01",
+                    title = "1. จองตั๋วออนไลน์ เข้า ตม.จีน & เช็กอินเข้าประเทศ",
+                    chineseTitle = "线上订票与入境通关",
+                    description = "ผ่าน ตม.จีน แสดงพาสปอร์ต ใบจองโรงแรม และเช็กอินเข้าพัก",
+                    xpReward = 80,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    isCurrent = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("我来中国 + 旅游/学习/商务", "บอกจุดประสงค์เข้าประเทศ เช่น 我来中国旅游 (ฉันมาเที่ยวจีน)"),
+                        GrammarNote("待 + จำนวนวัน + 天", "บอกระยะเวลาที่พัก เช่น 大概待十天 (อยู่ประมาณ 10 วัน)")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_02",
+                    title = "2. ถามทาง หลงทาง & อ่านป้ายบอกทิศทาง",
+                    chineseTitle = "问路指路与方向确认",
+                    description = "ถามเส้นทางจากคนท้องถิ่น เดินตรง เลี้ยวซ้ายขวา และเช็กป้ายรถไฟฟ้า",
+                    xpReward = 80,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("一直往前走 + 往左/右拐", "เดินตรงไปข้างหน้าเรื่อยๆ แล้วเลี้ยวซ้าย/ขวา"),
+                        GrammarNote("离这里远不远？", "อยู่ไกลจากที่นี่ไหม?")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_03",
+                    title = "3. ขอความช่วยเหลือทุกกรณี (ถ่ายรูป, นำทาง, อุบัติเหตุ)",
+                    chineseTitle = "全方位求助：拍照、带路与紧急救援",
+                    description = "วานช่วยถ่ายรูป ขอให้ช่วยนำทาง และแจ้งเหตุฉุกเฉิน 110 / 120",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("麻烦你帮我 + กริยา", "รบกวนคุณช่วยฉัน... เช่น 麻烦你帮我拍张照 (รบกวนช่วยถ่ายรูปให้หน่อย)"),
+                        GrammarNote("打 110 (ตำรวจ) / 打 120 (รถพยาบาล)", "เบอร์ฉุกเฉินในจีน: 110 แจ้งตำรวจ, 120 เรียกรถพยาบาล")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_04",
+                    title = "4. การเงิน เปิดแอปธนาคาร ถอนเงิน & สแกนจ่าย",
+                    chineseTitle = "银行业务、提现与扫码支付",
+                    description = "เปิดบัญชีธนาคาร ผูก Alipay/WeChat ถอนเงินสด และสแกนจ่ายร้านค้า",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("我扫你 还是 你扫我？", "ฉันสแกนคิวอาร์โค้ดคุณ หรือ คุณยิงบาร์โค้ดฉัน?"),
+                        GrammarNote("开通手机银行 / 绑定支付宝", "เปิดแอปธนาคารมือถือ / ผูกบัญชี Alipay")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_05",
+                    title = "5. เดินทางครบวงจร: เรียกรถ, รถไฟ, เครื่องบิน & สแกนจักรยาน",
+                    chineseTitle = "全能出行：打车、高铁、飞机与共享单车",
+                    description = "บอกเลขท้ายเบอร์โทรขึ้น DiDi ขึ้นรถไฟความเร็วสูง และสแกนปลดล็อกจักรยาน",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("手机尾号 + ตัวเลข 4 ตัว", "ยืนยันเลขท้ายเบอร์มือถือ 4 ตัวเวลาขึ้นรถ DiDi"),
+                        GrammarNote("扫码解锁共享单车", "สแกนคิวอาร์โค้ดปลดล็อกจักรยานแชร์ริ่งริมทาง")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_06",
+                    title = "6. กิน อยู่ & เช่าห้องพักในจีนแบบมือโปร",
+                    chineseTitle = "吃喝住行与租房安家",
+                    description = "สั่งอาหาร ระบุของที่ไม่กิน/แพ้ ทำสัญญาเช่าห้อง และลงทะเบียนที่พัก",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("不要放牛肉 / 不要放花生", "ไม่ใส่เนื้อวัว / ไม่ใส่ถั่วลิสง"),
+                        GrammarNote("拎包入住 / 水电网全包", "หิ้วกระเป๋าเข้าอยู่ได้เลย / รวมค่าน้ำไฟเน็ตทั้งหมด")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_07",
+                    title = "7. ความรัก จีบกัน & ชีวิตคู่ในจีน (กิน อยู่ ดูแลกัน)",
+                    chineseTitle = "恋爱表白与亲密相处",
+                    description = "บอกชอบ ขอเป็นแฟน และใช้ชีวิตประจำวันร่วมกัน (吃喝拉撒睡)",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("我喜欢你 / 做我女朋友好吗？", "ฉันชอบเธอ / เป็นแฟนกับฉันนะ?"),
+                        GrammarNote("吃喝拉撒睡", "การใช้ชีวิตประจำวันทุกเรื่องร่วมกัน (กิน ดื่ม ขับถ่าย นอน)")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_08",
+                    title = "8. ฉุกเฉิน สื่อสารเรื่องส่วนตัว & ป้องกันตัว",
+                    chineseTitle = "健康护理与隐私安全保护",
+                    description = "ซื้อของใช้ส่วนตัวในร้านขายยา 24 ชม. ถุงยางอนามัย ยาแก้ปวด และดูแลสุขภาพ",
+                    xpReward = 100,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("买避孕套 / 验孕棒 / 止痛药", "ซื้อถุงยางอนามัย / ที่ตรวจครรภ์ / ยาแก้ปวด"),
+                        GrammarNote("用黑色袋子装好", "ใส่ถุงทึบสีดำให้เรียบร้อย")
+                    )
+                ),
+                QuestNode(
+                    id = "fav_09",
+                    title = "9. เช็กเอาต์ ขอคืนภาษี & ขึ้นเครื่องบินกลับไท่กั๋ว (ประเทศไทย)",
+                    chineseTitle = "退房退税与搭机回泰国",
+                    description = "เช็กเอาต์โรงแรม ขอ Tax Refund โหลดกระเป๋า และบินกลับกรุงเทพฯ ประเทศไทย",
+                    xpReward = 120,
+                    starsEarned = 0,
+                    isUnlocked = true,
+                    type = QuestNodeType.DIALOGUE_ROLEPLAY,
+                    grammarNotes = listOf(
+                        GrammarNote("办理退房 / 离境退税", "เช็กเอาต์โรงแรม / ทำเรื่องขอคืนภาษีนักท่องเที่ยว"),
+                        GrammarNote("飞往泰国曼谷的航班", "เที่ยวบินมุ่งหน้าสู่กรุงเทพฯ ประเทศไทย (ไท่กั๋ว)")
+                    )
+                )
+            )
+        ),
+        QuestZone(
             id = "zone_1",
             titleTh = "โซนที่ 1: ตะลุยด่านพื้นฐาน & วรรณยุกต์ (HSK 1)",
             titleEn = "Zone 1: HSK 1 Foundations & Tone Mastery",

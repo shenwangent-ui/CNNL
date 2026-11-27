@@ -386,7 +386,7 @@ fun QuestMapScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (zone.id == "zone_favorite") "❤️ ถูกใจ" else zone.hskLevel.title,
+                                    text = if (zone.id == "zone_favorite") "⚡ ทันใจ" else zone.hskLevel.title,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = if (isSelected) Color.White else FrostedSlateDark
@@ -436,7 +436,7 @@ fun QuestMapScreen(
                                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
                             ) {
                                 Text(
-                                    text = if (currentZone.id == "zone_favorite") "❤️ หมวดพิเศษ • เอาตัวรอดในจีน 100%" else currentZone.hskLevel.title,
+                                    text = if (currentZone.id == "zone_favorite") "⚡ หมวดทันใจ • เอาตัวรอดในจีน 100%" else currentZone.hskLevel.title,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
