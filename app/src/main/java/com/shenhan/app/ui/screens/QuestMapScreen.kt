@@ -102,6 +102,8 @@ fun QuestMapScreen(
     onNavigateToCinema: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    androidx.compose.runtime.LaunchedEffect(questZones) { com.shenhan.app.data.CinemaGameBridge.updateQuestZones(questZones) }
+
     androidx.compose.runtime.LaunchedEffect(questZones) { CinemaGameBridge.syncQuestZones(questZones) }
 
     var selectedZoneIndex by remember { mutableIntStateOf(0) }

@@ -11,6 +11,10 @@ for path in glob.glob("app/src/main/java/**/*.kt", recursive=True):
         if bad in txt:
             errors.append(f"{path}: พบการเรียก {bad} ที่ไม่มีอยู่จริง")
 
+bridge_txt = open("app/src/main/java/com/shenhan/app/data/CinemaGameBridge.kt", encoding="utf-8").read()
+if "_questZones.value.isEmpty()" in bridge_txt:
+    errors.append("CinemaGameBridge.kt: ห้ามใส่เงื่อนไข _questZones.value.isEmpty() บล็อกการอัปเดตข้อมูลสด")
+
 if errors:
     print("❌ Pre-Flight Check ไม่ผ่าน! พบจุดที่จะทำให้ Build พัง:")
     for e in errors:

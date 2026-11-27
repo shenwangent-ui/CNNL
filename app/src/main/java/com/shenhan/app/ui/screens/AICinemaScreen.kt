@@ -344,6 +344,7 @@ fun AICinemaScreen(
                 modifier = Modifier.weight(1f)
             )
             GameArenaMode.CARD_MATCH -> CardMatchBattleGame(
+                questZones = questZones,
                 scriptMode = scriptMode,
                 onSpeak = onSpeak,
                 onReward = ::rewardGameSuccess,
@@ -351,6 +352,7 @@ fun AICinemaScreen(
                 modifier = Modifier.weight(1f)
             )
             GameArenaMode.FLASHCARDS -> SurvivalFlashcardsGame(
+                questZones = questZones,
                 scriptMode = scriptMode,
                 onSpeak = onSpeak,
                 onReward = ::rewardGameSuccess,
@@ -663,7 +665,7 @@ private fun GeminiInteractiveChatGame(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "ความคืบหน้าด่านนี้: $passedTurns / 3 รอบสนทนา",
+                        text = "ซิงก์แล้ว ${questZones.sumOf { it.nodes.size }} ด่าน • รอบสนทนา $passedTurns / 3",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF38BDF8)
@@ -964,11 +966,48 @@ private fun GeminiInteractiveChatGame(
     }
 }
 
+
+private fun buildDynamicCardsFromZones(zones: List<com.shenhan.app.model.QuestZone>): List<EssentialCardItem> {
+    val liveCards = mutableListOf<EssentialCardItem>()
+    var idx = 1
+    zones.forEach { zone ->
+        val catLabel = if (zone.id == "zone_favorite") "⚡ ทันใจ" else zone.hskLevel.title
+        zone.nodes.forEach { node ->
+            node.dialogueTurns.forEach { t ->
+                val simp = t.hans.trim()
+                val trad = t.hant.trim()
+                val pin = t.pinyin.trim()
+                val th = t.th.trim()
+                if (simp.isNotEmpty() && th.isNotEmpty()) {
+                    liveCards.add(
+                        EssentialCardItem(
+                            id = "live_${idx++}",
+                            zhSimp = simp,
+                            zhTrad = if (trad.isNotEmpty()) trad else simp,
+                            pinyin = pin,
+                            th = th,
+                            category = catLabel,
+                            exampleZh = simp,
+                            exampleTh = "${node.titleTh} — $th"
+                        )
+                    )
+                }
+            }
+        }
+    }
+    return if (liveCards.isNotEmpty()) {
+        (liveCards + ESSENTIAL_SURVIVAL_CARDS).distinctBy { it.zhSimp }
+    } else {
+        ESSENTIAL_SURVIVAL_CARDS
+    }
+}
+
 // =========================================================================
 // โหมด 2: เกมการ์ดจับคู่สายฟ้าแลบ (Card Match Battle)
 // =========================================================================
 @Composable
 private fun CardMatchBattleGame(
+    questZones: List<com.shenhan.app.model.QuestZone>,
     scriptMode: ScriptMode,
     onSpeak: (String) -> Unit,
     onReward: (Int, String) -> Unit,
@@ -976,8 +1015,9 @@ private fun CardMatchBattleGame(
     modifier: Modifier = Modifier
 ) {
     var roundSeed by remember { mutableIntStateOf(0) }
-    val tiles = remember(roundSeed, scriptMode) {
-        val picked = ESSENTIAL_SURVIVAL_CARDS.shuffled().take(6)
+    val allCards = remember(questZones) { buildDynamicCardsFromZones(questZones) }
+    val tiles = remember(roundSeed, scriptMode, allCards) {
+        val picked = allCards.shuffled().take(6)
         val deck = mutableListOf<MatchCardTile>()
         var uid = 1
         picked.forEach { item ->
@@ -1112,6 +1152,7 @@ private fun CardMatchBattleGame(
 // =========================================================================
 @Composable
 private fun SurvivalFlashcardsGame(
+    questZones: List<com.shenhan.app.model.QuestZone>,
     scriptMode: ScriptMode,
     onSpeak: (String) -> Unit,
     onReward: (Int, String) -> Unit,
@@ -1119,8 +1160,9 @@ private fun SurvivalFlashcardsGame(
 ) {
     var cardIndex by remember { mutableIntStateOf(0) }
     var isFlipped by remember(cardIndex) { mutableStateOf(false) }
+    val allCards = remember(questZones) { buildDynamicCardsFromZones(questZones) }
 
-    val card = ESSENTIAL_SURVIVAL_CARDS[cardIndex % ESSENTIAL_SURVIVAL_CARDS.size]
+    val card = allCards[cardIndex % allCards.size]
     val zhMain = if (scriptMode == ScriptMode.SIMPLIFIED) card.zhSimp else card.zhTrad
 
     Column(
@@ -1134,7 +1176,7 @@ private fun SurvivalFlashcardsGame(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("🗂️ การ์ดประโยคจำเป็น (${(cardIndex % ESSENTIAL_SURVIVAL_CARDS.size) + 1}/${ESSENTIAL_SURVIVAL_CARDS.size})", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text("🗂️ การ์ดประโยคจำเป็น (${(cardIndex % allCards.size) + 1}/${allCards.size})", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0x3338BDF8)) {
                 Text(card.category, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8), modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
             }
@@ -1231,7 +1273,7 @@ private fun SurvivalFlashcardsGame(
             OutlinedButton(
                 onClick = {
                     cardIndex += 1
-                    onSpeak(ESSENTIAL_SURVIVAL_CARDS[cardIndex % ESSENTIAL_SURVIVAL_CARDS.size].zhSimp)
+                    onSpeak(allCards[cardIndex % allCards.size].zhSimp)
                 },
                 border = BorderStroke(1.dp, Color(0xFFF59E0B)),
                 shape = RoundedCornerShape(14.dp),
@@ -1244,7 +1286,7 @@ private fun SurvivalFlashcardsGame(
                 onClick = {
                     onReward(15, "✅ จำการ์ดแม่นแล้ว!")
                     cardIndex += 1
-                    onSpeak(ESSENTIAL_SURVIVAL_CARDS[cardIndex % ESSENTIAL_SURVIVAL_CARDS.size].zhSimp)
+                    onSpeak(allCards[cardIndex % allCards.size].zhSimp)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
                 shape = RoundedCornerShape(14.dp),

@@ -9,15 +9,23 @@ object CinemaGameBridge {
     private val _activeCinemaNodeId = MutableStateFlow<String?>(null)
     val activeCinemaNodeId: StateFlow<String?> = _activeCinemaNodeId.asStateFlow()
 
-    private val _questZones = MutableStateFlow<List<QuestZone>>(
-        try { emptyList() } catch (_: Exception) { emptyList() }
-    )
+    private val _questZones = MutableStateFlow<List<QuestZone>>(emptyList())
     val questZones: StateFlow<List<QuestZone>> = _questZones.asStateFlow()
 
-    fun syncQuestZones(zones: List<QuestZone>) {
-        if (zones.isNotEmpty() && _questZones.value.isEmpty()) {
+    private val _isLiveSupabaseData = MutableStateFlow(false)
+    val isLiveSupabaseData: StateFlow<Boolean> = _isLiveSupabaseData.asStateFlow()
+
+    fun updateQuestZones(zones: List<QuestZone>, isLive: Boolean = true) {
+        if (zones.isNotEmpty()) {
             _questZones.value = zones
+            if (isLive) {
+                _isLiveSupabaseData.value = true
+            }
         }
+    }
+
+    fun syncQuestZones(zones: List<QuestZone>) {
+        updateQuestZones(zones, isLive = true)
     }
 
     fun openNodeInCinema(nodeId: String) {
