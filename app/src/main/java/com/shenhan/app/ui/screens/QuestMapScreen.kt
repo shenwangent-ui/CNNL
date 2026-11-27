@@ -1,5 +1,11 @@
 package com.shenhan.app.ui.screens
 
+import android.speech.tts.TextToSpeech
+import android.widget.Toast
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import java.util.Locale
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -95,6 +101,28 @@ fun QuestMapScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedZoneIndex by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    var activeDialogueNode by remember { mutableStateOf<QuestNode?>(null) }
+    var dialogueStepIndex by remember { mutableStateOf(0) }
+    var ttsEngine by remember { mutableStateOf<TextToSpeech?>(null) }
+
+    DisposableEffect(Unit) {
+        var engine: TextToSpeech? = null
+        engine = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val res = engine?.setLanguage(Locale.TRADITIONAL_CHINESE)
+                if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    engine?.setLanguage(Locale.CHINESE)
+                }
+            }
+        }
+        ttsEngine = engine
+        onDispose {
+            engine?.stop()
+            engine?.shutdown()
+        }
+    }
+
     var activeQuizQuestion by remember { mutableStateOf<QuizQuestion?>(null) }
     var activeNodeId by remember { mutableStateOf<String?>(null) }
     var selectedAnswerIndex by remember { mutableStateOf<Int?>(null) }
@@ -508,16 +536,28 @@ fun QuestMapScreen(
                 node = node,
                 scriptMode = scriptMode,
                 onNodeClick = {
-                    when (node.nodeType) {
-                        com.shenhan.app.model.QuestNodeType.TONE_DRILL -> onNavigateToLab()
-                        com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToLab()
-                        com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> onNavigateToCinema()
-                        com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER,
-                        com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> {
-                            activeNodeId = node.id
-                            activeQuizQuestion = SampleData.sampleQuizQuestions.random()
-                            selectedAnswerIndex = null
-                            isAnswerSubmitted = false
+                    if (!node.isUnlocked && node.starsEarned == 0) {
+                        Toast.makeText(context, "🔒 กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
+                    } else if (node.dialogueTurns.isNotEmpty()) {
+                        activeDialogueNode = node
+                        dialogueStepIndex = 0
+                        val firstLine = node.dialogueTurns.firstOrNull()
+                        if (firstLine != null) {
+                            val speakText = if (scriptMode == ScriptMode.SIMPLIFIED) firstLine.hans else firstLine.hant
+                            ttsEngine?.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "turn_0")
+                        }
+                    } else {
+                        when (node.nodeType) {
+                            com.shenhan.app.model.QuestNodeType.TONE_DRILL -> onNavigateToLab()
+                            com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToVocab()
+                            com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> onNavigateToCinema()
+                            com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER,
+                            com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> {
+                                activeNodeId = node.id
+                                activeQuizQuestion = SampleData.sampleQuizQuestions.random()
+                                selectedAnswerIndex = null
+                                isAnswerSubmitted = false
+                            }
                         }
                     }
                 }
@@ -681,6 +721,83 @@ fun QuestMapScreen(
     }
 }
 
+
+    // Audio Dialogue Practice Modal
+    if (activeDialogueNode != null) {
+        val dNode = activeDialogueNode!!
+        val turns = dNode.dialogueTurns
+        val currentTurn = turns.getOrNull(dialogueStepIndex)
+        if (currentTurn != null) {
+            val chineseLine = if (scriptMode == ScriptMode.SIMPLIFIED) currentTurn.hans else currentTurn.hant
+            val isNpc = currentTurn.speaker == "npc"
+            AlertDialog(
+                onDismissRequest = { activeDialogueNode = null },
+                containerColor = FrostedGlassWhite80,
+                shape = RoundedCornerShape(24.dp),
+                title = {
+                    Text(
+                        text = if (isNpc) "🎧 ฟังคู่สนทนา (${dialogueStepIndex + 1}/${turns.size})" else "🗣️ ตาคุณพูดตอบ (${dialogueStepIndex + 1}/${turns.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isNpc) FrostedPurpleContainer else FrostedMatchGreenContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(text = chineseLine, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(text = currentTurn.pinyin, fontSize = 13.sp, color = FrostedPurplePrimary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = currentTurn.th, fontSize = 13.sp, color = FrostedSlateLight)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = { ttsEngine?.speak(chineseLine, TextToSpeech.QUEUE_FLUSH, null, "replay_turn") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = FrostedGlassWhite80)
+                        ) {
+                            Text("🔊 ฟังเสียงอ่านภาษาจีนอีกครั้ง", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (dialogueStepIndex < turns.lastIndex) {
+                                val nextIdx = dialogueStepIndex + 1
+                                dialogueStepIndex = nextIdx
+                                val nextTurn = turns[nextIdx]
+                                val nextText = if (scriptMode == ScriptMode.SIMPLIFIED) nextTurn.hans else nextTurn.hant
+                                ttsEngine?.speak(nextText, TextToSpeech.QUEUE_FLUSH, null, "turn_$nextIdx")
+                            } else {
+                                onCompleteNode(dNode.id, 3)
+                                activeDialogueNode = null
+                                Toast.makeText(context, "🎉 ผ่านบทสนทนาแล้ว! +${dNode.xpReward} XP", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = FrostedPurplePrimary)
+                    ) {
+                        Text(if (dialogueStepIndex < turns.lastIndex) "ประโยคถัดไป ▶" else "เรียนจบรับ 3 ดาว ★")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { activeDialogueNode = null }) {
+                        Text("ปิด", color = FrostedSlateLight)
+                    }
+                }
+            )
+        }
+    }
+
 @Composable
 fun QuestNodeCard(
     node: QuestNode,
@@ -728,7 +845,7 @@ fun QuestNodeCard(
                         .border(1.5.dp, if (node.starsEarned > 0) FrostedMatchGreen.copy(alpha = 0.5f) else FrostedPurplePrimary.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = node.iconEmoji, fontSize = 24.sp)
+                    Text(text = if (!node.isUnlocked && node.starsEarned == 0) "🔒" else node.iconEmoji, fontSize = 24.sp)
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -786,7 +903,7 @@ fun QuestNodeCard(
                 Spacer(modifier = Modifier.height(6.dp))
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = if (node.starsEarned == 3) FrostedMatchGreenContainer else FrostedPurpleContainer,
+                    color = if (node.starsEarned > 0) FrostedMatchGreenContainer else FrostedPurpleContainer,
                     border = BorderStroke(1.dp, if (node.starsEarned == 3) FrostedMatchGreen.copy(alpha = 0.4f) else FrostedPurplePrimary.copy(alpha = 0.3f))
                 ) {
                     Text(
@@ -794,7 +911,7 @@ fun QuestNodeCard(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (node.starsEarned == 3) FrostedMatchGreenDark else FrostedPurplePrimary
+                        color = when { !node.isUnlocked && node.starsEarned == 0 -> FrostedSlateLight; node.starsEarned > 0 -> Color(0xFF4ADE80); else -> FrostedPurplePrimary }
                     )
                 }
             }

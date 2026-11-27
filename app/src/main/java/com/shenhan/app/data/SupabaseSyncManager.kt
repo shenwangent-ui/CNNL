@@ -1,7 +1,8 @@
 package com.shenhan.app.data
 
 import android.util.Log
-import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import com.google.firebase.auth.FirebaseAuth
 import com.shenhan.app.model.DialogueTurn
 import com.shenhan.app.model.HskLevel
@@ -37,14 +38,18 @@ class SupabaseSyncManager {
         return (SUPABASE_ANON_KEY.startsWith("eyJ") || SUPABASE_ANON_KEY.startsWith("sb_publishable_", ignoreCase = true))
     }
 
-    private fun getFirebaseToken(): String? {
-        return try {
-            val user = FirebaseAuth.getInstance().currentUser ?: return null
-            Tasks.await(user.getIdToken(false)).token
-        } catch (e: Exception) {
-            Log.w("SupabaseSync", "Cannot get Firebase ID token: ${e.message}")
-            null
+    private suspend fun getFirebaseToken(): String? = suspendCancellableCoroutine { cont ->
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            cont.resume(null)
+            return@suspendCancellableCoroutine
         }
+        user.getIdToken(false)
+            .addOnSuccessListener { res -> cont.resume(res.token) }
+            .addOnFailureListener { e ->
+                Log.w("SupabaseSync", "Cannot get Firebase ID token: ${e.message}")
+                cont.resume(null)
+            }
     }
 
     private fun buildRequest(url: String, token: String?): Request.Builder {
