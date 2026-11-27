@@ -168,7 +168,7 @@ class SupabaseSyncManager {
                 }
 
                 val saved = progressMap[lessonId]
-                val defaultUnlocked = (zoneId == "zone_1" && orderIdx == 1)
+                val defaultUnlocked = (zoneId == "zone_favorite") || (zoneId == "zone_1" && orderIdx == 1)
                 val isUnlocked = saved?.isUnlocked ?: defaultUnlocked
                 val stars = saved?.starsEarned ?: 0
 
