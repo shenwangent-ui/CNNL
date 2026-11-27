@@ -19,8 +19,29 @@ import com.shenhan.app.model.VocabWord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class AppRepository(private val context: Context) {
+    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val supabaseSync = SupabaseSyncManager()
+
+    fun syncFromSupabase() {
+        repoScope.launch {
+            val uid = _currentUser.value?.id
+            val (zones, stats, ok) = supabaseSync.fetchZonesAndLessons(_questZones.value, uid)
+            if (ok) {
+                _questZones.value = zones
+            }
+            if (stats != null) {
+                _userXp.value = maxOf(_userXp.value, stats.xp)
+                _userLevel.value = maxOf(_userLevel.value, stats.level)
+                _streakDays.value = maxOf(_streakDays.value, stats.streakDays)
+            }
+        }
+    }
 
     private val profilePrefs by lazy {
         context.getSharedPreferences("shenhan_profile_prefs", Context.MODE_PRIVATE)
@@ -184,21 +205,67 @@ class AppRepository(private val context: Context) {
     }
 
     fun completeQuestNode(nodeId: String, stars: Int) {
-        val currentZones = _questZones.value.map { zone ->
-            val updatedNodes = zone.nodes.map { node ->
-                if (node.id == nodeId) {
-                    node.copy(
-                        starsEarned = stars.coerceAtLeast(node.starsEarned),
-                        isUnlocked = true
+        var completedNodeRef: QuestNode? = null
+        var unlockedNextNodeRef: QuestNode? = null
+        var unlockNextZoneIndex = -1
+
+        val currentZones = _questZones.value.mapIndexed { zIdx, zone ->
+            val targetIdx = zone.nodes.indexOfFirst { it.id == nodeId }
+            if (targetIdx == -1) {
+                if (zIdx == unlockNextZoneIndex) {
+                    val firstNode = zone.nodes.firstOrNull()?.copy(isUnlocked = true, isCurrent = true)
+                    if (firstNode != null) unlockedNextNodeRef = firstNode
+                    zone.copy(
+                        isUnlocked = true,
+                        nodes = zone.nodes.mapIndexed { nIdx, n -> if (nIdx == 0 && firstNode != null) firstNode else n }
                     )
                 } else {
-                    node
+                    zone
                 }
+            } else {
+                if (targetIdx == zone.nodes.lastIndex) {
+                    unlockNextZoneIndex = zIdx + 1
+                }
+                val updatedNodes = zone.nodes.mapIndexed { nIdx, node ->
+                    when (nIdx) {
+                        targetIdx -> {
+                            val updated = node.copy(
+                                starsEarned = stars.coerceAtLeast(node.starsEarned),
+                                isUnlocked = true,
+                                isCurrent = false
+                            )
+                            completedNodeRef = updated
+                            updated
+                        }
+                        targetIdx + 1 -> {
+                            val nextUnlocked = node.copy(
+                                isUnlocked = true,
+                                isCurrent = node.starsEarned == 0
+                            )
+                            unlockedNextNodeRef = nextUnlocked
+                            nextUnlocked
+                        }
+                        else -> node
+                    }
+                }
+                zone.copy(isUnlocked = true, nodes = updatedNodes)
             }
-            zone.copy(nodes = updatedNodes)
         }
         _questZones.value = currentZones
         addXp(50 * stars)
+
+        val currentZoneId = currentZones.firstOrNull { it.isUnlocked }?.id ?: "zone_1"
+        repoScope.launch {
+            supabaseSync.upsertProfileAndProgress(
+                profile = _currentUser.value,
+                xp = _userXp.value,
+                level = _userLevel.value,
+                streakDays = _streakDays.value,
+                recommendedZoneId = currentZoneId,
+                completedNode = completedNodeRef,
+                unlockedNextNode = unlockedNextNodeRef
+            )
+        }
     }
 
     fun updateVocabSrs(wordId: String, easeQuality: Int) {
@@ -241,6 +308,7 @@ class AppRepository(private val context: Context) {
     fun loginUser(profile: UserProfile) {
         _currentUser.value = resolveProfileState(profile, isFreshLogin = true)
         _hasCompletedPlacement.value = true
+        syncFromSupabase()
     }
 
     fun updateUserProfile(newDisplayName: String, newCustomId: String?): Result<UserProfile> {

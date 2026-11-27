@@ -8,6 +8,15 @@ enum class QuestNodeType {
     BOSS_CHALLENGE
 }
 
+data class DialogueTurn(
+    val turn: Int,
+    val speaker: String, // "npc" หรือ "user"
+    val hant: String,
+    val hans: String,
+    val pinyin: String,
+    val th: String
+)
+
 data class QuestNode(
     val id: String,
     val zoneId: String,
@@ -22,7 +31,8 @@ data class QuestNode(
     val isUnlocked: Boolean = false,
     val isCurrent: Boolean = false,
     val descriptionTh: String,
-    val hskLevel: HskLevel
+    val hskLevel: HskLevel,
+    val dialogueTurns: List<DialogueTurn> = emptyList()
 )
 
 data class QuestZone(
