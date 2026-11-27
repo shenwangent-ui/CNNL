@@ -549,7 +549,7 @@ fun QuestMapScreen(
                     } else {
                         when (node.nodeType) {
                             com.shenhan.app.model.QuestNodeType.TONE_DRILL -> onNavigateToLab()
-                            com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToVocab()
+                            com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToLab()
                             com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> onNavigateToCinema()
                             com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER,
                             com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> {

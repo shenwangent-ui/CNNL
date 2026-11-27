@@ -4,7 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import com.google.firebase.auth.FirebaseAuth
-import com.shenhan.app.model.DialogueTurn
+import com.shenhan.app.model.LessonDialogueLine
 import com.shenhan.app.model.HskLevel
 import com.shenhan.app.model.QuestNode
 import com.shenhan.app.model.QuestNodeType
@@ -139,11 +139,11 @@ class SupabaseSyncManager {
                 val zoneId = lObj.optString("zone_id")
                 val orderIdx = lObj.optInt("order_index", 1)
                 val scriptArr = lObj.optJSONArray("dialogue_script") ?: JSONArray()
-                val turns = mutableListOf<DialogueTurn>()
+                val turns = mutableListOf<LessonDialogueLine>()
                 for (j in 0 until scriptArr.length()) {
                     val t = scriptArr.getJSONObject(j)
                     turns.add(
-                        DialogueTurn(
+                        LessonDialogueLine(
                             turn = t.optInt("turn", j + 1),
                             speaker = t.optString("speaker", "npc"),
                             hant = t.optString("hant", ""),
