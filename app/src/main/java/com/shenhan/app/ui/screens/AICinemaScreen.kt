@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.shenhan.app.data.AppRepository
+import com.shenhan.app.data.CinemaGameBridge
 import com.shenhan.app.data.GeminiSuggestion
 import com.shenhan.app.data.GeminiTutorService
 import com.shenhan.app.model.ScriptMode
@@ -117,8 +117,8 @@ fun AICinemaScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val questZones by AppRepository.questZones.collectAsState()
-    val activeCinemaNodeId by AppRepository.activeCinemaNodeId.collectAsState()
+    val questZones by CinemaGameBridge.questZones.collectAsState()
+    val activeCinemaNodeId by CinemaGameBridge.activeCinemaNodeId.collectAsState()
 
     var currentMode by remember { mutableStateOf(GameArenaMode.AI_CHAT) }
     var hearts by remember { mutableIntStateOf(5) }
@@ -396,7 +396,7 @@ private fun GeminiInteractiveChatGame(
                 selectedZoneIndex = zIdx
                 selectedNodeId = targetId
             }
-            AppRepository.clearActiveCinemaNode()
+            CinemaGameBridge.clearActiveCinemaNode()
         }
     }
 
@@ -567,7 +567,7 @@ private fun GeminiInteractiveChatGame(
                     }
                     if (passedTurns >= 3 && !isLessonCompleted) {
                         isLessonCompleted = true
-                        AppRepository.completeQuestNode(activeNode.id, 3, activeNode.xpReward)
+                        CinemaGameBridge.completeQuestNode(activeNode.id, 3)
                         onReward(activeNode.xpReward, "🏆 ผ่านด่าน Gemini 3 ดาว!")
                     }
                 }.onFailure { err ->
@@ -613,7 +613,7 @@ private fun GeminiInteractiveChatGame(
                 passedTurns += 1
                 if (passedTurns >= 3 && !isLessonCompleted) {
                     isLessonCompleted = true
-                    AppRepository.completeQuestNode(activeNode.id, 3, activeNode.xpReward)
+                    CinemaGameBridge.completeQuestNode(activeNode.id, 3)
                     onReward(activeNode.xpReward, "🏆 ผ่านด่านเรียบร้อย!")
                 }
             }
@@ -1142,14 +1142,18 @@ private fun SurvivalFlashcardsGame(
 
         Surface(
             shape = RoundedCornerShape(24.dp),
-            brush = Brush.verticalGradient(
-                if (isFlipped) listOf(Color(0xFF1E293B), Color(0xFF0F172A))
-                else listOf(Color(0xFF312E81), Color(0xFF1E1B4B))
-            ),
+            color = Color.Transparent,
             border = BorderStroke(2.dp, if (isFlipped) Color(0xFF10B981) else Color(0xFF818CF8)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(310.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    Brush.verticalGradient(
+                        if (isFlipped) listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                        else listOf(Color(0xFF312E81), Color(0xFF1E1B4B))
+                    )
+                )
                 .clickable {
                     isFlipped = !isFlipped
                     onSpeak(zhMain)
@@ -1187,7 +1191,7 @@ private fun SurvivalFlashcardsGame(
 
                 if (isFlipped) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = Color(0xFF334155))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF334155)))
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = card.th,

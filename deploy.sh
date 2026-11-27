@@ -1,3 +1,6 @@
+set -e
+python3 preflight_check.py
+git add -A
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
 

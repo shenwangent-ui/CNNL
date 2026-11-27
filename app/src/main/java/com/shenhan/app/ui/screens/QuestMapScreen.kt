@@ -1,5 +1,7 @@
 package com.shenhan.app.ui.screens
 
+import com.shenhan.app.data.CinemaGameBridge
+
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.compose.runtime.DisposableEffect
@@ -100,6 +102,8 @@ fun QuestMapScreen(
     onNavigateToCinema: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    androidx.compose.runtime.LaunchedEffect(questZones) { CinemaGameBridge.syncQuestZones(questZones) }
+
     var selectedZoneIndex by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     var activeDialogueNode by remember { mutableStateOf<QuestNode?>(null) }
