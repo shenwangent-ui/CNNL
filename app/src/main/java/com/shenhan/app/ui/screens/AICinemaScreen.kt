@@ -14,13 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,12 +32,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shenhan.app.data.AppRepository
+import com.shenhan.app.data.GeminiSuggestion
+import com.shenhan.app.data.GeminiTutorService
 import com.shenhan.app.model.ScriptMode
 import com.shenhan.app.ui.theme.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private enum class GameArenaMode(val label: String) {
-    AI_CHAT("💬 แชทเกม AI"),
+    AI_CHAT("✨ แชทเกม Gemini"),
     CARD_MATCH("🃏 การ์ดจับคู่"),
     FLASHCARDS("🗂️ การ์ดจำเป็น"),
     SENTENCE_CARDS("🧩 เรียงประโยค")
@@ -56,14 +55,6 @@ private data class CinemaChatBubble(
     val coachFeedback: String? = null,
     val accuracyPct: Int? = null,
     val animateTyping: Boolean = false
-)
-
-private data class SmartReplyOption(
-    val zhSimp: String,
-    val zhTrad: String,
-    val pinyin: String,
-    val th: String,
-    val tag: String
 )
 
 private data class EssentialCardItem(
@@ -128,12 +119,17 @@ fun AICinemaScreen(
     val context = LocalContext.current
     val questZones by AppRepository.questZones.collectAsState()
     val activeCinemaNodeId by AppRepository.activeCinemaNodeId.collectAsState()
-    val userXp by AppRepository.userXp.collectAsState()
 
     var currentMode by remember { mutableStateOf(GameArenaMode.AI_CHAT) }
     var hearts by remember { mutableIntStateOf(5) }
     var comboCount by remember { mutableIntStateOf(0) }
-    var chestCharge by remember { mutableIntStateOf(1) } // เต็ม 3 เปิดกล่องสมบัติได้
+    var chestCharge by remember { mutableIntStateOf(1) }
+
+    // สถานะ Gemini API Key & Dialog ตั้งค่า
+    var hasGeminiKey by remember { mutableStateOf(GeminiTutorService.hasApiKey(context)) }
+    var activeModelBadge by remember { mutableStateOf(if (hasGeminiKey) "Gemini 3.8 Flash" else "ใส่ Gemini Key") }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
+    var keyDraft by remember { mutableStateOf(GeminiTutorService.getApiKey(context)) }
 
     LaunchedEffect(activeCinemaNodeId) {
         if (activeCinemaNodeId != null) {
@@ -165,13 +161,68 @@ fun AICinemaScreen(
         Toast.makeText(context, "❌ ยังไม่ตรงเป๊ะ ($hint) • เสีย 1 ❤️", Toast.LENGTH_SHORT).show()
     }
 
+    if (showApiKeyDialog) {
+        AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            containerColor = Color(0xFF0F172A),
+            title = {
+                Text("✨ ตั้งค่า Google Gemini API Key", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "วาง Gemini API Key จาก Google AI Studio เพื่อให้โมเดล Gemini 3.8 Flash สนทนาโต้ตอบสดและสร้างตัวเลือกคำตอบอัจฉริยะให้คุณทุกด่าน",
+                        color = FrostedSlateLight,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = keyDraft,
+                        onValueChange = { keyDraft = it },
+                        placeholder = { Text("AIzaSy...", color = FrostedSlateMuted) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF38BDF8),
+                            unfocusedBorderColor = Color(0xFF334155)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        GeminiTutorService.saveApiKey(context, keyDraft)
+                        hasGeminiKey = GeminiTutorService.hasApiKey(context)
+                        activeModelBadge = if (hasGeminiKey) "Gemini 3.8 Flash" else "ใส่ Gemini Key"
+                        showApiKeyDialog = false
+                        Toast.makeText(
+                            context,
+                            if (hasGeminiKey) "✅ บันทึก Gemini API Key เรียบร้อย!" else "ล้างค่า API Key แล้ว",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                ) {
+                    Text("บันทึกคีย์", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApiKeyDialog = false }) {
+                    Text("ปิด", color = FrostedSlateLight)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF080D19))
             .testTag("ai_cinema_screen")
     ) {
-        // แถบสถานะเกมด้านบน (หัวใจ, คอมโบ, กล่องสมบัติ, XP)
+        // แถบสถานะเกม + สถานะโมเดล Gemini ด้านบน
         Surface(
             color = Color(0xFF0F172A),
             border = BorderStroke(1.dp, Color(0xFF1E293B)),
@@ -183,67 +234,80 @@ fun AICinemaScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // หัวใจพลังชีวิต
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = "Hearts",
                             tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(17.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
                         Text(
                             text = "$hearts/5",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFFCA5A5)
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        // คอมโบไฟลุก
+                        Spacer(modifier = Modifier.width(8.dp))
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (comboCount > 0) Color(0x33F59E0B) else Color(0xFF1E293B),
-                            border = BorderStroke(1.dp, if (comboCount > 0) Color(0xFFF59E0B) else Color(0xFF334155))
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (comboCount > 0) Color(0x33F59E0B) else Color(0xFF1E293B)
                         ) {
                             Text(
-                                text = "🔥 COMBO x${comboCount.coerceAtLeast(1)}",
+                                text = "🔥 x${comboCount.coerceAtLeast(1)}",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (comboCount > 0) Color(0xFFFBBF24) else FrostedSlateLight,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (chestCharge >= 3) Color(0xFFF59E0B) else Color(0xFF1E293B),
+                            modifier = Modifier.clickable {
+                                if (chestCharge >= 3) {
+                                    chestCharge = 0
+                                    hearts = 5
+                                    onAddXp(100)
+                                    Toast.makeText(context, "🎁 เปิดกล่องสมบัติสำเร็จ! +100 XP & หัวใจเต็ม ❤️", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "สะสมอีก ${3 - chestCharge} แต้มเพื่อเปิดกล่องสมบัติ!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = if (chestCharge >= 3) "🎁 เปิด!" else "🎁 $chestCharge/3",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (chestCharge >= 3) Color.Black else Color(0xFFFBBF24),
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
                         }
                     }
 
-                    // ปุ่มกล่องสมบัติโบนัส
+                    // ปุ่มแสดงสถานะโมเดล Gemini (กดตั้งค่า API Key ได้ทันที)
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (chestCharge >= 3) Color(0xFFF59E0B) else Color(0xFF1E293B),
-                        border = BorderStroke(1.dp, Color(0xFFF59E0B)),
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (hasGeminiKey) Color(0x2638BDF8) else Color(0x33F59E0B),
+                        border = BorderStroke(1.dp, if (hasGeminiKey) Color(0xFF38BDF8) else Color(0xFFF59E0B)),
                         modifier = Modifier.clickable {
-                            if (chestCharge >= 3) {
-                                chestCharge = 0
-                                hearts = 5
-                                onAddXp(100)
-                                Toast.makeText(context, "🎁 เปิดกล่องสมบัติสำเร็จ! รับ +100 XP & หัวใจเต็ม 5 ดวง ❤️", Toast.LENGTH_LONG).show()
-                            } else {
-                                Toast.makeText(context, "ตอบถูกอีก ${3 - chestCharge} ครั้งเพื่อเปิดกล่องสมบัติรับ +100 XP!", Toast.LENGTH_SHORT).show()
-                            }
+                            keyDraft = GeminiTutorService.getApiKey(context)
+                            showApiKeyDialog = true
                         }
                     ) {
                         Text(
-                            text = if (chestCharge >= 3) "🎁 เปิดกล่องโบนัส!" else "🎁 กล่อง $chestCharge/3",
+                            text = "✨ $activeModelBadge",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (chestCharge >= 3) Color.Black else Color(0xFFFBBF24),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            color = if (hasGeminiKey) Color(0xFF7DD3FC) else Color(0xFFFBBF24),
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // แถบสลับโหมดเกม 4 รูปแบบ
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(GameArenaMode.values()) { mode ->
                         val isSelected = currentMode == mode
@@ -266,16 +330,17 @@ fun AICinemaScreen(
             }
         }
 
-        // เนื้อหาหลักตามโหมดที่เลือก
         when (currentMode) {
-            GameArenaMode.AI_CHAT -> AiInteractiveChatGame(
+            GameArenaMode.AI_CHAT -> GeminiInteractiveChatGame(
                 questZones = questZones,
                 activeCinemaNodeId = activeCinemaNodeId,
                 scriptMode = scriptMode,
+                hasGeminiKey = hasGeminiKey,
+                onRequestOpenKeyDialog = { showApiKeyDialog = true },
+                onModelResolved = { model -> activeModelBadge = model },
                 onSpeak = onSpeak,
                 onSimulateUserSpeech = onSimulateUserSpeech,
                 onReward = ::rewardGameSuccess,
-                onMistake = ::penalizeMistake,
                 modifier = Modifier.weight(1f)
             )
             GameArenaMode.CARD_MATCH -> CardMatchBattleGame(
@@ -302,20 +367,24 @@ fun AICinemaScreen(
 }
 
 // =========================================================================
-// โหมด 1: เกมแชทพิมพ์โต้ตอบ AI + AI พิมพ์ตอบสด + ลิสต์ตัวช่วยคำตอบอัจฉริยะ
+// โหมด 1: เกมแชทพิมพ์โต้ตอบสดกับ Google Gemini + ลิสต์ตัวช่วยคำตอบไดนามิก
 // =========================================================================
 @Composable
-private fun AiInteractiveChatGame(
+private fun GeminiInteractiveChatGame(
     questZones: List<com.shenhan.app.model.QuestZone>,
     activeCinemaNodeId: String?,
     scriptMode: ScriptMode,
+    hasGeminiKey: Boolean,
+    onRequestOpenKeyDialog: () -> Unit,
+    onModelResolved: (String) -> Unit,
     onSpeak: (String) -> Unit,
     onSimulateUserSpeech: (String) -> Unit,
     onReward: (Int, String) -> Unit,
-    onMistake: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     var selectedZoneIndex by remember { mutableIntStateOf(0) }
     var selectedNodeId by remember { mutableStateOf<String?>(null) }
 
@@ -338,147 +407,217 @@ private fun AiInteractiveChatGame(
         ?: currentZone.nodes.firstOrNull { it.isCurrent && it.isUnlocked }
         ?: currentZone.nodes.firstOrNull() ?: return
 
-    val scriptSteps = remember(activeNode.id, scriptMode) {
-        val rawTurns = activeNode.dialogueTurns
-        if (rawTurns.isNotEmpty()) {
-            rawTurns.map { t ->
-                val zh = if (scriptMode == ScriptMode.SIMPLIFIED) t.hans else t.hant
-                Triple(t.speaker.equals("user", ignoreCase = true), zh, Pair(t.pinyin, t.th))
-            }
-        } else {
-            listOf(
-                Triple(false, "你好！欢迎来到《${activeNode.titleZhSimp}》实战对话。", Pair("Nǐ hǎo! Huānyíng láidào shízhàn duìhuà.", "สวัสดี! ยินดีต้อนรับสู่การสนทนาจริง: ${activeNode.titleTh}")),
-                Triple(true, "你好，我想用中文练习这个场景。", Pair("Nǐ hǎo, wǒ xiǎng yòng Zhōngwén liànxí zhège chǎngjǐng.", "สวัสดี ฉันอยากฝึกใช้ภาษาจีนในสถานการณ์นี้")),
-                Triple(false, "太棒了！请告诉我你现在需要什么帮助？", Pair("Tài bàng le! Qǐng gàosu wǒ nǐ xiànzài xūyào shénme bāngzhù?", "ยอดเยี่ยมมาก! บอกฉันได้เลยว่าตอนนี้คุณต้องการความช่วยเหลือเรื่องอะไร?")),
-                Triple(true, "谢谢你的帮助，我现在完全明白了！", Pair("Xièxie nǐ de bāngzhù, wǒ xiànzài wánquán míngbai le!", "ขอบคุณสำหรับความช่วยเหลือ ตอนนี้ฉันเข้าใจทั้งหมดแล้ว!"))
-            )
-        }
-    }
-
-    var currentStepIdx by remember(activeNode.id) { mutableIntStateOf(0) }
     var userInput by remember(activeNode.id) { mutableStateOf("") }
-    var isAiTyping by remember(activeNode.id) { mutableStateOf(false) }
+    var isGeminiTyping by remember(activeNode.id) { mutableStateOf(false) }
     var showSuggestionList by remember(activeNode.id) { mutableStateOf(true) }
+    var passedTurns by remember(activeNode.id) { mutableIntStateOf(0) }
     var isLessonCompleted by remember(activeNode.id) { mutableStateOf(false) }
-    var awardedStars by remember(activeNode.id) { mutableIntStateOf(0) }
+    var sessionSeed by remember(activeNode.id) { mutableIntStateOf(0) }
 
-    val chatHistory = remember(activeNode.id) { mutableStateListOf<CinemaChatBubble>() }
+    val chatHistory = remember(activeNode.id, sessionSeed) { mutableStateListOf<CinemaChatBubble>() }
+    val dynamicSuggestions = remember(activeNode.id, sessionSeed) { mutableStateListOf<GeminiSuggestion>() }
 
-    // AI พิมพ์ข้อความเปิดฉาก
-    LaunchedEffect(activeNode.id) {
+    fun loadFallbackSuggestions() {
+        dynamicSuggestions.clear()
+        if (scriptMode == ScriptMode.SIMPLIFIED) {
+            dynamicSuggestions.add(GeminiSuggestion("你好！我想练习《${activeNode.titleZhSimp}》。", "Nǐ hǎo! Wǒ xiǎng liànxí zhège chǎngjǐng.", "สวัสดี! ฉันอยากฝึกบทสนทนาสถานการณ์นี้", "🎯 เริ่มภารกิจ"))
+            dynamicSuggestions.add(GeminiSuggestion("请问这个怎么说？", "Qǐngwèn zhège zěnme shuō?", "ขอถามหน่อยว่าอันนี้พูดว่าอย่างไร?", "💬 ถามต่อ"))
+            dynamicSuggestions.add(GeminiSuggestion("好的，我明白了，谢谢！", "Hǎo de, wǒ míngbai le, xièxie!", "โอเค ฉันเข้าใจแล้ว ขอบคุณ!", "👍 ตอบตกลง"))
+        } else {
+            dynamicSuggestions.add(GeminiSuggestion("你好！我想練習《${activeNode.titleZhTrad}》。", "Nǐ hǎo! Wǒ xiǎng liànxí zhège chǎngjǐng.", "สวัสดี! ฉันอยากฝึกบทสนทนาสถานการณ์นี้", "🎯 เริ่มภารกิจ"))
+            dynamicSuggestions.add(GeminiSuggestion("請問這個怎麼說？", "Qǐngwèn zhège zěnme shuō?", "ขอถามหน่อยว่าอันนี้พูดว่าอย่างไร?", "💬 ถามต่อ"))
+            dynamicSuggestions.add(GeminiSuggestion("好的，我明白了，謝謝！", "Hǎo de, wǒ míngbai le, xièxie!", "โอเค ฉันเข้าใจแล้ว ขอบคุณ!", "👍 ตอบตกลง"))
+        }
+    }
+
+    // เริ่มต้นด่าน: ให้ Gemini เปิดฉากสนทนาตามสถานการณ์จริงของด่านนั้น
+    LaunchedEffect(activeNode.id, scriptMode, hasGeminiKey, sessionSeed) {
         chatHistory.clear()
-        isAiTyping = true
-        delay(350)
-        var idx = 0
-        while (idx < scriptSteps.size && !scriptSteps[idx].first) {
-            val step = scriptSteps[idx]
-            chatHistory.add(
-                CinemaChatBubble(
-                    id = "init_$idx",
-                    isUser = false,
-                    zhText = step.second,
-                    pinyin = step.third.first,
-                    thText = step.third.second,
-                    animateTyping = true
-                )
+        passedTurns = 0
+        isLessonCompleted = false
+        loadFallbackSuggestions()
+
+        if (hasGeminiKey) {
+            isGeminiTyping = true
+            val res = GeminiTutorService.generateTurn(
+                context = context,
+                node = activeNode,
+                scriptMode = scriptMode,
+                historyPairs = emptyList(),
+                latestUserMessage = null
             )
-            idx++
-        }
-        isAiTyping = false
-        currentStepIdx = idx
-    }
-
-    val expectedUserTurn = scriptSteps.getOrNull(currentStepIdx)
-
-    // สร้างลิสต์ตัวช่วยคำตอบอัจฉริยะ (Smart Reply List) ที่เปลี่ยนตามรอบสนทนา
-    val dynamicSuggestions = remember(activeNode.id, currentStepIdx, scriptMode) {
-        val list = mutableListOf<SmartReplyOption>()
-        if (expectedUserTurn != null) {
-            list.add(
-                SmartReplyOption(
-                    zhSimp = expectedUserTurn.second,
-                    zhTrad = expectedUserTurn.second,
-                    pinyin = expectedUserTurn.third.first,
-                    th = expectedUserTurn.third.second,
-                    tag = "🎯 คำตอบตรงภารกิจ"
-                )
-            )
-        }
-        list.add(SmartReplyOption("你好，请问可以帮我一下吗？", "你好，請問可以幫我一下嗎？", "Nǐ hǎo, qǐngwèn kěyǐ bāng wǒ yīxià ma?", "สวัสดี ขอถามหน่อยว่าช่วยฉันสักครู่ได้ไหม?", "💬 ขอความช่วยเหลือ"))
-        list.add(SmartReplyOption("好的，没问题，谢谢你！", "好的，沒問題，謝謝你！", "Hǎo de, méi wèntí, xièxie nǐ!", "โอเค ไม่มีปัญหา ขอบคุณมาก!", "👍 ตอบตกลง"))
-        list.add(SmartReplyOption("不好意思，请再说一遍。", "不好意思，請再說一遍。", "Bù hǎoyìsi, qǐng zài shuō yī biàn.", "ขอโทษครับ กรุณาพูดอีกครั้ง", "🔄 ขอฟังซ้ำ"))
-        list
-    }
-
-    // เมื่อผู้ใช้กดส่งคำตอบ -> AI จะขึ้นกำลังพิมพ์และพิมพ์ตอบโต้กลับมาทีละตัวอักษร
-    var pendingReplyStepIdx by remember(activeNode.id) { mutableIntStateOf(-1) }
-
-    LaunchedEffect(pendingReplyStepIdx) {
-        if (pendingReplyStepIdx >= 0) {
-            isAiTyping = true
-            delay(650) // จำลองจังหวะ AI กำลังคิดและพิมพ์คำตอบ
-            var nextIdx = pendingReplyStepIdx
-            while (nextIdx < scriptSteps.size && !scriptSteps[nextIdx].first) {
-                val npcTurn = scriptSteps[nextIdx]
+            isGeminiTyping = false
+            res.onSuccess { turn ->
+                onModelResolved(turn.usedModel)
                 chatHistory.add(
                     CinemaChatBubble(
-                        id = "npc_${nextIdx}_${System.currentTimeMillis()}",
+                        id = "gem_open_${System.currentTimeMillis()}",
                         isUser = false,
-                        zhText = npcTurn.second,
-                        pinyin = npcTurn.third.first,
-                        thText = npcTurn.third.second,
+                        zhText = turn.replyZh,
+                        pinyin = turn.replyPinyin,
+                        thText = turn.replyTh,
+                        coachFeedback = "✨ ${turn.coachFeedbackTh}",
                         animateTyping = true
                     )
                 )
-                onSpeak(npcTurn.second)
-                nextIdx++
+                if (turn.suggestions.isNotEmpty()) {
+                    dynamicSuggestions.clear()
+                    dynamicSuggestions.addAll(turn.suggestions)
+                }
+            }.onFailure { err ->
+                val openZh = if (scriptMode == ScriptMode.SIMPLIFIED) {
+                    "你好！欢迎来到《${activeNode.titleZhSimp}》，我们开始对话吧！"
+                } else {
+                    "你好！歡迎來到《${activeNode.titleZhTrad}》，我們開始對話吧！"
+                }
+                chatHistory.add(
+                    CinemaChatBubble(
+                        id = "fallback_open",
+                        isUser = false,
+                        zhText = openZh,
+                        pinyin = "Nǐ hǎo! Wǒmen kāishǐ duìhuà ba!",
+                        thText = "สวัสดี! ยินดีต้อนรับสู่ด่าน ${activeNode.titleTh} มาเริ่มสนทนากันเลย!",
+                        coachFeedback = "⚠️ เชื่อมต่อ Gemini ไม่สำเร็จ (${err.message?.take(45)}) • ใช้โหมดสำรองชั่วคราว",
+                        animateTyping = true
+                    )
+                )
             }
-            isAiTyping = false
-            currentStepIdx = nextIdx
-            pendingReplyStepIdx = -1
-
-            if (nextIdx >= scriptSteps.size && !isLessonCompleted) {
-                isLessonCompleted = true
-                awardedStars = 3
-                AppRepository.completeQuestNode(activeNode.id, 3, activeNode.xpReward)
-                onReward(activeNode.xpReward, "🎉 ผ่านด่านสนทนา AI!")
+        } else {
+            val openZh = if (scriptMode == ScriptMode.SIMPLIFIED) {
+                "你好！欢迎来到《${activeNode.titleZhSimp}》实战对话。"
+            } else {
+                "你好！歡迎來到《${activeNode.titleZhTrad}》實戰對話。"
             }
+            chatHistory.add(
+                CinemaChatBubble(
+                    id = "offline_open",
+                    isUser = false,
+                    zhText = openZh,
+                    pinyin = "Nǐ hǎo! Huānyíng láidào shízhàn duìhuà.",
+                    thText = "สวัสดี! ยินดีต้อนรับสู่การสนทนาจริง: ${activeNode.titleTh}",
+                    coachFeedback = "💡 แตะปุ่ม '✨ ใส่ Gemini Key' มุมขวาบนเพื่อเปิดใช้โมเดล Gemini สนทนาสด",
+                    animateTyping = true
+                )
+            )
         }
     }
 
-    fun handleSendAnswer(rawText: String) {
+    fun sendMessageToGemini(rawText: String) {
         val text = rawText.trim()
-        if (text.isEmpty() || isAiTyping || isLessonCompleted) return
+        if (text.isEmpty() || isGeminiTyping) return
 
-        val expectedZh = expectedUserTurn?.second ?: ""
-        val hasChinese = text.any { it.code in 0x4E00..0x9FFF }
-        val matchScore = when {
-            text == expectedZh -> 100
-            hasChinese && expectedZh.any { ch -> ch.code in 0x4E00..0x9FFF && text.contains(ch) } -> 92
-            hasChinese -> 84
-            else -> 70
-        }
-
-        val feedback = when {
-            matchScore >= 95 -> "🌟 สมบูรณ์แบบ! รูปประโยคและคำศัพท์เป๊ะมาก"
-            matchScore >= 85 -> "✅ สื่อสารเป็นธรรมชาติ! AI เข้าใจเจตนาครบถ้วน"
-            else -> "💡 ตอบโต้ได้ต่อเนื่อง (แนะนำเพิ่มคำว่า: $expectedZh)"
-        }
-
+        val historyBefore = chatHistory.map { Pair(it.isUser, it.zhText) }
+        val userBubbleId = "usr_${System.currentTimeMillis()}"
         chatHistory.add(
             CinemaChatBubble(
-                id = "usr_${System.currentTimeMillis()}",
+                id = userBubbleId,
                 isUser = true,
                 zhText = text,
-                pinyin = expectedUserTurn?.third?.first ?: "ข้อความของคุณ",
-                thText = expectedUserTurn?.third?.second ?: "ส่งคำตอบโต้ตอบแล้ว",
-                coachFeedback = feedback,
-                accuracyPct = matchScore
+                pinyin = "กำลังให้ Gemini วิเคราะห์...",
+                thText = "ส่งข้อความให้ Gemini ประเมินผลแล้ว"
             )
         )
         userInput = ""
-        onReward(25, "💬 ตอบโต้สำเร็จ")
-        pendingReplyStepIdx = currentStepIdx + 1
+        isGeminiTyping = true
+
+        scope.launch {
+            if (hasGeminiKey) {
+                val res = GeminiTutorService.generateTurn(
+                    context = context,
+                    node = activeNode,
+                    scriptMode = scriptMode,
+                    historyPairs = historyBefore,
+                    latestUserMessage = text
+                )
+                isGeminiTyping = false
+                res.onSuccess { turn ->
+                    onModelResolved(turn.usedModel)
+                    // อัปเดตผลประเมินลงในบับเบิลของผู้ใช้
+                    val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
+                    if (uIdx != -1) {
+                        chatHistory[uIdx] = chatHistory[uIdx].copy(
+                            pinyin = "ความแม่นยำ ${turn.accuracyPct}%",
+                            thText = "ตรวจโดย ${turn.usedModel}",
+                            coachFeedback = turn.coachFeedbackTh,
+                            accuracyPct = turn.accuracyPct
+                        )
+                    }
+
+                    // เพิ่มคำตอบสดจาก Gemini
+                    chatHistory.add(
+                        CinemaChatBubble(
+                            id = "gem_${System.currentTimeMillis()}",
+                            isUser = false,
+                            zhText = turn.replyZh,
+                            pinyin = turn.replyPinyin,
+                            thText = turn.replyTh,
+                            animateTyping = true
+                        )
+                    )
+                    onSpeak(turn.replyZh)
+
+                    if (turn.suggestions.isNotEmpty()) {
+                        dynamicSuggestions.clear()
+                        dynamicSuggestions.addAll(turn.suggestions)
+                    }
+
+                    onReward(25, "✨ Gemini ประเมินผ่าน")
+                    if (turn.stepPassed) {
+                        passedTurns += 1
+                    }
+                    if (passedTurns >= 3 && !isLessonCompleted) {
+                        isLessonCompleted = true
+                        AppRepository.completeQuestNode(activeNode.id, 3, activeNode.xpReward)
+                        onReward(activeNode.xpReward, "🏆 ผ่านด่าน Gemini 3 ดาว!")
+                    }
+                }.onFailure { err ->
+                    val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
+                    if (uIdx != -1) {
+                        chatHistory[uIdx] = chatHistory[uIdx].copy(
+                            pinyin = "โหมดสำรอง",
+                            thText = "ตรวจสอบการเชื่อมต่อหรือ API Key",
+                            coachFeedback = "⚠️ Gemini ตอบกลับไม่ได้: ${err.message?.take(60)}",
+                            accuracyPct = 85
+                        )
+                    }
+                }
+            } else {
+                delay(450)
+                isGeminiTyping = false
+                val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
+                if (uIdx != -1) {
+                    chatHistory[uIdx] = chatHistory[uIdx].copy(
+                        pinyin = "โหมดพื้นฐาน (ยังไม่ได้ใส่ Gemini Key)",
+                        thText = "แตะ '✨ ใส่ Gemini Key' ด้านบนเพื่อเปิด AI สด",
+                        coachFeedback = "👍 รับทราบข้อความ! ใส่ Gemini API Key เพื่อให้ AI ตอบโต้ตามบริบทจริง",
+                        accuracyPct = 88
+                    )
+                }
+                val fallbackReply = if (scriptMode == ScriptMode.SIMPLIFIED) {
+                    "很好！继续用中文跟我练习吧。"
+                } else {
+                    "很好！繼續用中文跟我練習吧。"
+                }
+                chatHistory.add(
+                    CinemaChatBubble(
+                        id = "fb_${System.currentTimeMillis()}",
+                        isUser = false,
+                        zhText = fallbackReply,
+                        pinyin = "Hěn hǎo! Jìxù yòng Zhōngwén gēn wǒ liànxí ba.",
+                        thText = "เยี่ยมมาก! ฝึกสนทนาภาษาจีนกับฉันต่อได้เลย",
+                        animateTyping = true
+                    )
+                )
+                onSpeak(fallbackReply)
+                onReward(20, "💬 ตอบโต้สำเร็จ")
+                passedTurns += 1
+                if (passedTurns >= 3 && !isLessonCompleted) {
+                    isLessonCompleted = true
+                    AppRepository.completeQuestNode(activeNode.id, 3, activeNode.xpReward)
+                    onReward(activeNode.xpReward, "🏆 ผ่านด่านเรียบร้อย!")
+                }
+            }
+        }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -517,7 +656,28 @@ private fun AiInteractiveChatGame(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // แถบเลือกด่านย่อย
+                // แถบเลือกด่านย่อย + ตัวนับความคืบหน้าวัดผลกับ Gemini (passedTurns/3)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "ความคืบหน้าด่านนี้: $passedTurns / 3 รอบสนทนา",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF38BDF8)
+                    )
+                    Text(
+                        text = "🔄 เริ่มด่านใหม่",
+                        fontSize = 11.sp,
+                        color = FrostedSlateLight,
+                        modifier = Modifier.clickable { sessionSeed += 1 }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(currentZone.nodes) { node ->
                         val isCur = node.id == activeNode.id
@@ -531,7 +691,7 @@ private fun AiInteractiveChatGame(
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
                                 Text(
-                                    text = if (node.starsEarned > 0) "★".repeat(node.starsEarned) + " ผ่านแล้ว" else "🎯 ด่านสนทนา",
+                                    text = if (node.starsEarned > 0) "★".repeat(node.starsEarned) + " ผ่านแล้ว" else "✨ สนทนากับ Gemini",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (node.starsEarned > 0) Color(0xFFFBBF24) else Color(0xFF38BDF8)
@@ -550,7 +710,7 @@ private fun AiInteractiveChatGame(
                 }
             }
 
-            // บอลลูนแชทโต้ตอบ (พร้อมเอฟเฟกต์ AI พิมพ์ตัวอักษรไหลทีละตัว)
+            // บอลลูนแชทโต้ตอบ (พร้อมเอฟเฟกต์พิมพ์ตัวอักษรไหลทีละตัว)
             items(chatHistory, key = { it.id }) { msg ->
                 var visibleChars by remember(msg.id) {
                     mutableIntStateOf(if (msg.animateTyping) 0 else msg.zhText.length)
@@ -559,7 +719,7 @@ private fun AiInteractiveChatGame(
                     if (msg.animateTyping) {
                         for (i in 1..msg.zhText.length) {
                             visibleChars = i
-                            delay(28)
+                            delay(24)
                         }
                     }
                 }
@@ -572,7 +732,7 @@ private fun AiInteractiveChatGame(
                         shape = RoundedCornerShape(16.dp),
                         color = if (msg.isUser) Color(0xFF1D4ED8) else Color(0xFF162033),
                         border = BorderStroke(1.dp, if (msg.isUser) Color(0xFF60A5FA) else Color(0xFF2A3954)),
-                        modifier = Modifier.widthIn(max = 310.dp)
+                        modifier = Modifier.widthIn(max = 315.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(
@@ -581,7 +741,7 @@ private fun AiInteractiveChatGame(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = if (msg.isUser) "คุณ • ความแม่นยำ ${msg.accuracyPct ?: 90}%" else "🤖 AI คู่สนทนา",
+                                    text = if (msg.isUser) "คุณ • ${msg.accuracyPct ?: 90}%" else "✨ Gemini คู่สนทนา",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (msg.isUser) Color(0xFFBFDBFE) else Color(0xFF38BDF8)
@@ -619,8 +779,7 @@ private fun AiInteractiveChatGame(
                 }
             }
 
-            // แถบแจ้งเตือนขณะ AI กำลังพิมพ์คำตอบ
-            if (isAiTyping) {
+            if (isGeminiTyping) {
                 item {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
@@ -628,7 +787,7 @@ private fun AiInteractiveChatGame(
                         modifier = Modifier.padding(vertical = 4.dp)
                     ) {
                         Text(
-                            text = "🤖 AI กำลังพิมพ์คำตอบ...",
+                            text = "✨ Gemini กำลังคิดและพิมพ์คำตอบ...",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF38BDF8),
@@ -651,7 +810,7 @@ private fun AiInteractiveChatGame(
                             modifier = Modifier.padding(14.dp)
                         ) {
                             Text(
-                                text = "🏆 ผ่านด่านสนทนาเรียบร้อย! (★★★)",
+                                text = "🏆 ผ่านการวัดผลกับ Gemini เรียบร้อย! (★★★)",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF34D399)
@@ -681,141 +840,123 @@ private fun AiInteractiveChatGame(
             item { Spacer(modifier = Modifier.height(10.dp)) }
         }
 
-        // ส่วนล่าง: ลิสต์คำตอบแนะนำ (Smart Suggestion List) + ช่องพิมพ์คำตอบโต้ตอบ
-        if (!isLessonCompleted) {
-            Surface(
-                color = Color(0xFF0F172A),
-                border = BorderStroke(1.dp, Color(0xFF1E293B)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "📋 ลิสต์ประโยคแนะนำสำหรับตอบโต้:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFBBF24)
-                        )
-                        Text(
-                            text = if (showSuggestionList) "ซ่อนลิสต์ ▲" else "เปิดลิสต์ ▼",
-                            fontSize = 11.sp,
-                            color = Color(0xFF38BDF8),
-                            modifier = Modifier.clickable { showSuggestionList = !showSuggestionList }
-                        )
-                    }
+        // ส่วนล่าง: ลิสต์ตัวเลือกคำตอบที่ Gemini สร้างให้สดใหม่ทุกเทิร์น + ช่องพิมพ์โต้ตอบอิสระ
+        Surface(
+            color = Color(0xFF0F172A),
+            border = BorderStroke(1.dp, Color(0xFF1E293B)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (hasGeminiKey) "✨ ลิสต์คำตอบแนะนำจาก Gemini:" else "📋 ลิสต์ประโยคแนะนำสำหรับตอบโต้:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFBBF24)
+                    )
+                    Text(
+                        text = if (showSuggestionList) "ซ่อนลิสต์ ▲" else "เปิดลิสต์ ▼",
+                        fontSize = 11.sp,
+                        color = Color(0xFF38BDF8),
+                        modifier = Modifier.clickable { showSuggestionList = !showSuggestionList }
+                    )
+                }
 
-                    if (showSuggestionList) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(dynamicSuggestions) { opt ->
-                                val zhDisplay = if (scriptMode == ScriptMode.SIMPLIFIED) opt.zhSimp else opt.zhTrad
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF1E293B),
-                                    border = BorderStroke(1.dp, Color(0xFF334155)),
-                                    modifier = Modifier
-                                        .width(235.dp)
-                                        .clickable {
-                                            userInput = zhDisplay
-                                            onSpeak(zhDisplay)
-                                        }
-                                ) {
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Text(text = opt.tag, fontSize = 10.sp, color = Color(0xFF34D399), fontWeight = FontWeight.Bold)
-                                            Text(
-                                                text = "ส่งเลย ▶",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF38BDF8),
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.clickable {
-                                                    onSpeak(zhDisplay)
-                                                    handleSendAnswer(zhDisplay)
-                                                }
-                                            )
-                                        }
-                                        Text(text = zhDisplay, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(text = opt.th, fontSize = 11.sp, color = FrostedSlateLight, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (showSuggestionList) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(dynamicSuggestions) { opt ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF1E293B),
+                                border = BorderStroke(1.dp, Color(0xFF334155)),
+                                modifier = Modifier
+                                    .width(240.dp)
+                                    .clickable {
+                                        userInput = opt.zh
+                                        onSpeak(opt.zh)
                                     }
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(text = opt.tag, fontSize = 10.sp, color = Color(0xFF34D399), fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = "ส่งเลย ▶",
+                                            fontSize = 10.sp,
+                                            color = Color(0xFF38BDF8),
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.clickable {
+                                                onSpeak(opt.zh)
+                                                sendMessageToGemini(opt.zh)
+                                            }
+                                        )
+                                    }
+                                    Text(text = opt.zh, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(text = opt.th, fontSize = 11.sp, color = FrostedSlateLight, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    // แถบปุ่มคำศัพท์ด่วนกดเติมลงช่องพิมพ์
-                    val quickWords = listOf("你好", "请问", "多少钱", "不要放辣", "可以吗", "谢谢")
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(quickWords) { w ->
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFF172554),
-                                modifier = Modifier.clickable { userInput += w }
-                            ) {
-                                Text(
-                                    text = "+ $w",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF93C5FD),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IconButton(
+                        onClick = {
+                            val quickPick = dynamicSuggestions.firstOrNull()?.zh ?: "你好"
+                            onSimulateUserSpeech(quickPick)
+                            onSpeak(quickPick)
+                            sendMessageToGemini(quickPick)
+                        },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF7C3AED))
+                    ) {
+                        Icon(imageVector = Icons.Default.Mic, contentDescription = "พูด", tint = Color.White)
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = userInput,
+                        onValueChange = { userInput = it },
+                        placeholder = {
+                            Text(
+                                if (hasGeminiKey) "พิมพ์จีนหรือถาม Gemini ได้เลย..." else "พิมพ์คำตอบภาษาจีน...",
+                                fontSize = 13.sp,
+                                color = FrostedSlateMuted
+                            )
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color(0xFF38BDF8),
+                            unfocusedBorderColor = Color(0xFF334155)
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.weight(1f)
+                    )
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    IconButton(
+                        onClick = { sendMessageToGemini(userInput) },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2563EB))
                     ) {
-                        IconButton(
-                            onClick = {
-                                val autoText = expectedUserTurn?.second ?: "你好"
-                                onSimulateUserSpeech(autoText)
-                                onSpeak(autoText)
-                                handleSendAnswer(autoText)
-                            },
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF7C3AED))
-                        ) {
-                            Icon(imageVector = Icons.Default.Mic, contentDescription = "พูด", tint = Color.White)
-                        }
-
-                        OutlinedTextField(
-                            value = userInput,
-                            onValueChange = { userInput = it },
-                            placeholder = { Text("พิมพ์คำตอบภาษาจีน...", fontSize = 13.sp, color = FrostedSlateMuted) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedBorderColor = Color(0xFF38BDF8),
-                                unfocusedBorderColor = Color(0xFF334155)
-                            ),
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        IconButton(
-                            onClick = { handleSendAnswer(userInput) },
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF2563EB))
-                        ) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "ส่ง", tint = Color.White)
-                        }
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "ส่ง", tint = Color.White)
                     }
                 }
             }
@@ -999,7 +1140,6 @@ private fun SurvivalFlashcardsGame(
             }
         }
 
-        // ตัวการ์ดหลัก (แตะเพื่อพลิกดูคำแปล + ประโยคตัวอย่าง)
         Surface(
             shape = RoundedCornerShape(24.dp),
             brush = Brush.verticalGradient(
@@ -1152,7 +1292,6 @@ private fun SentenceBuilderCardGame(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // ช่องวางการ์ดประโยคที่ผู้เล่นเรียง
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = Color(0xFF0F172A),
@@ -1192,7 +1331,6 @@ private fun SentenceBuilderCardGame(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // คลังการ์ดคำศัพท์ให้เลือกแตะ
             Text("คลังการ์ดคำศัพท์:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
             bankWords.indices.toList().chunked(3).forEach { rowIdxList ->
