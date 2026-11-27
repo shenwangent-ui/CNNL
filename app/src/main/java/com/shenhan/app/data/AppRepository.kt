@@ -48,7 +48,7 @@ class AppRepository(private val context: Context) {
         return SampleData.vocabList.map { word ->
             word.copy(
                 srsStage = 0,
-                srsMastery = SrsMastery.NEW,
+                mastery = SrsMastery.NEW,
                 isBookmarked = false
             )
         }
