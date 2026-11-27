@@ -1,5 +1,10 @@
 package com.shenhan.app.model
 
+data class GrammarNote(
+    val pattern: String,
+    val explain: String
+)
+
 enum class QuestNodeType {
     TONE_DRILL,
     VOCAB_SRS,
@@ -32,7 +37,8 @@ data class QuestNode(
     val isCurrent: Boolean = false,
     val descriptionTh: String,
     val hskLevel: HskLevel,
-    val dialogueTurns: List<LessonDialogueLine> = emptyList()
+    val dialogueTurns: List<LessonDialogueLine> = emptyList(),
+    val grammarNotes: List<GrammarNote> = emptyList()
 )
 
 data class QuestZone(
