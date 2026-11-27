@@ -908,7 +908,7 @@ fun QuestNodeCard(
                     border = BorderStroke(1.dp, if (node.starsEarned == 3) FrostedMatchGreen.copy(alpha = 0.4f) else FrostedPurplePrimary.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = if (node.starsEarned == 3) "ผ่านแล้ว ✓" else "เริ่มลุย ▶",
+                        text = when { !node.isUnlocked && node.starsEarned == 0 -> "ล็อกอยู่"; node.starsEarned > 0 -> "ผ่านแล้ว ✓"; else -> "เริ่มลุย ▶" },
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,

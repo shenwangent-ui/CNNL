@@ -138,6 +138,17 @@ class SupabaseSyncManager {
                 val lessonId = lObj.optString("lesson_id")
                 val zoneId = lObj.optString("zone_id")
                 val orderIdx = lObj.optInt("order_index", 1)
+                val grammarArr = lObj.optJSONArray("grammar_notes") ?: JSONArray()
+                val grammars = mutableListOf<GrammarNote>()
+                for (g in 0 until grammarArr.length()) {
+                    val gObj = grammarArr.getJSONObject(g)
+                    grammars.add(
+                        GrammarNote(
+                            pattern = gObj.optString("pattern", ""),
+                            explain = gObj.optString("explain", "")
+                        )
+                    )
+                }
                 val scriptArr = lObj.optJSONArray("dialogue_script") ?: JSONArray()
                 val turns = mutableListOf<LessonDialogueLine>()
                 for (j in 0 until scriptArr.length()) {
@@ -174,7 +185,8 @@ class SupabaseSyncManager {
                     isCurrent = isUnlocked && stars == 0,
                     descriptionTh = lObj.optString("npc_role", "ฝึกสนทนาโต้ตอบ"),
                     hskLevel = HskLevel.HSK1,
-                    dialogueTurns = turns
+                    dialogueTurns = turns,
+                    grammarNotes = grammars
                 )
                 lessonsByZone.getOrPut(zoneId) { mutableListOf() }.add(node)
             }
