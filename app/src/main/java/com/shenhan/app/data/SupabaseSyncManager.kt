@@ -1,5 +1,7 @@
 package com.shenhan.app.data
 
+import com.shenhan.app.model.GrammarNote
+
 import android.util.Log
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
