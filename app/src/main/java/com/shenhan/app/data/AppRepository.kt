@@ -28,6 +28,50 @@ class AppRepository(private val context: Context) {
     private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val supabaseSync = SupabaseSyncManager()
 
+    
+    private fun buildZeroQuestZones(): List<QuestZone> {
+        return SampleData.questZones.mapIndexed { zIdx, zone ->
+            zone.copy(
+                isUnlocked = (zIdx == 0),
+                nodes = zone.nodes.mapIndexed { nIdx, node ->
+                    node.copy(
+                        starsEarned = 0,
+                        isUnlocked = (zIdx == 0 && nIdx == 0),
+                        isCurrent = (zIdx == 0 && nIdx == 0)
+                    )
+                }
+            )
+        }
+    }
+
+    private fun buildZeroVocabList(): List<VocabWord> {
+        return SampleData.vocabList.map { word ->
+            word.copy(
+                srsStage = 0,
+                srsMastery = SrsMastery.NEW,
+                isBookmarked = false
+            )
+        }
+    }
+
+    fun resetProgressToZero() {
+        _streakDays.value = 0
+        _isCheckedInToday.value = false
+        _userXp.value = 0
+        _userLevel.value = 1
+        _readinessScore.value = HskReadinessScore(
+            overallScore = 0,
+            listeningScore = 0,
+            speakingToneScore = 0,
+            readingScore = 0,
+            vocabMasteryScore = 0,
+            targetHskLevel = HskLevel.HSK1,
+            readinessPercentage = 0
+        )
+        _questZones.value = buildZeroQuestZones()
+        _vocabList.value = buildZeroVocabList()
+    }
+
     fun syncFromSupabase() {
         repoScope.launch {
             val uid = _currentUser.value?.id
@@ -119,7 +163,7 @@ class AppRepository(private val context: Context) {
     val scriptMode: StateFlow<ScriptMode> = _scriptMode.asStateFlow()
 
     // Subscription
-    private val _subscriptionTier = MutableStateFlow(SubscriptionTier.PRO_YEARLY)
+    private val _subscriptionTier = MutableStateFlow(SubscriptionTier.FREE)
     val subscriptionTier: StateFlow<SubscriptionTier> = _subscriptionTier.asStateFlow()
 
     // User Progress & Gamification
@@ -140,7 +184,7 @@ class AppRepository(private val context: Context) {
         HskReadinessScore(
             overallScore = 0,
             listeningScore = 0,
-            speakingToneScore = 82,
+            speakingToneScore = 0,
             readingScore = 0,
             vocabMasteryScore = 0,
             targetHskLevel = HskLevel.HSK3,
@@ -150,11 +194,11 @@ class AppRepository(private val context: Context) {
     val readinessScore: StateFlow<HskReadinessScore> = _readinessScore.asStateFlow()
 
     // Quest Zones
-    private val _questZones = MutableStateFlow(SampleData.questZones)
+    private val _questZones = MutableStateFlow(buildZeroQuestZones())
     val questZones: StateFlow<List<QuestZone>> = _questZones.asStateFlow()
 
     // Vocab SRS Items
-    private val _vocabList = MutableStateFlow(SampleData.vocabList)
+    private val _vocabList = MutableStateFlow(buildZeroVocabList())
     val vocabList: StateFlow<List<VocabWord>> = _vocabList.asStateFlow()
 
     // Tone Practice Syllables
@@ -306,6 +350,7 @@ class AppRepository(private val context: Context) {
 
     // Authentication & Profile Actions
     fun loginUser(profile: UserProfile) {
+        resetProgressToZero()
         _currentUser.value = resolveProfileState(profile, isFreshLogin = true)
         _hasCompletedPlacement.value = true
         syncFromSupabase()
@@ -375,6 +420,7 @@ class AppRepository(private val context: Context) {
     }
 
     fun logout() {
+        resetProgressToZero()
         try {
             com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
         } catch (_: Exception) {}
