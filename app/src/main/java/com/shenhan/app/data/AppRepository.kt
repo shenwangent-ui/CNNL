@@ -69,13 +69,15 @@ class AppRepository(private val context: Context) {
     }
 
     private fun buildZeroQuestZones(): List<QuestZone> {
+        val isProNow = ProEntitlementManager.isPro(context)
         val base = SampleData.questZones.mapIndexed { zIdx, zone ->
+            val zoneFreeOrPro = isProNow || (zone.id == "zone_favorite") || (zIdx < 3)
             zone.copy(
-                isUnlocked = (zIdx == 0),
+                isUnlocked = zoneFreeOrPro,
                 nodes = zone.nodes.mapIndexed { nIdx, node ->
                     node.copy(
                         starsEarned = 0,
-                        isUnlocked = (zone.id == "zone_favorite") || (zIdx == 0 && nIdx == 0),
+                        isUnlocked = zoneFreeOrPro,
                         isCurrent = (zIdx == 0 && nIdx == 0)
                     )
                 }
@@ -316,6 +318,12 @@ class AppRepository(private val context: Context) {
     fun setSubscriptionTier(tier: SubscriptionTier) {
         _subscriptionTier.value = tier
         ProEntitlementManager.setPro(context, tier.isPro)
+        if (tier.isPro) {
+            _questZones.value = _questZones.value.map { zone ->
+                zone.copy(isUnlocked = true, nodes = zone.nodes.map { it.copy(isUnlocked = true) })
+            }
+            CinemaGameBridge.updateQuestZones(_questZones.value)
+        }
     }
 
     fun setAudioSpeed(speed: Float) {

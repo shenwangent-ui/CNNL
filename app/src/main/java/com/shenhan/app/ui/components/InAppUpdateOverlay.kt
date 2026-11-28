@@ -143,7 +143,6 @@ fun InAppUpdateOverlay() {
         }
     }
 
-    // เมื่อผู้ใช้ไปกดอนุญาตติดตั้งแอปนอกสโตร์แล้วกดย้อนกลับมาที่แอป ให้ติดตั้งต่อทันที
     DisposableEffect(lifecycleOwner, pendingApkFile) {
         val observer = LifecycleEventObserver { _, event ->
             val queued = pendingApkFile
@@ -160,7 +159,6 @@ fun InAppUpdateOverlay() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // เช็กเวอร์ชันอัปเดตอัตโนมัติทันทีที่เปิดแอป
     LaunchedEffect(Unit) {
         val found = checkLatestGithubRelease(context)
         if (found != null) {
