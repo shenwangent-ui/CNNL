@@ -61,6 +61,17 @@
                 <action android:name="com.shenhan.app.ACTION_DAILY_REMINDER" />
             </intent-filter>
         </receiver>
+            <receiver
+            android:name=".data.UpdateInstallStatusReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".data.AppReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
