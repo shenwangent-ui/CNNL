@@ -244,6 +244,10 @@ class AppRepository(private val context: Context) {
     val vocabList: StateFlow<List<VocabWord>> = _vocabList.asStateFlow()
 
     init {
+        if (ProEntitlementManager.isPro(context)) {
+            val proTier = SubscriptionTier.values().firstOrNull { it.isPro } ?: SubscriptionTier.FREE
+            _subscriptionTier.value = proTier
+        }
         CinemaGameBridge.updateCustomPacks(_customPacks.value)
         CinemaGameBridge.updateQuestZones(_questZones.value)
     }
@@ -256,6 +260,12 @@ class AppRepository(private val context: Context) {
     }
 
     fun importVocabPackFromText(packName: String, rawText: String): Result<CustomVocabPack> {
+                val isProNow = _subscriptionTier.value.isPro || ProEntitlementManager.isPro(context)
+        if (!isProNow && _customPacks.value.size >= ProEntitlementManager.FREE_MAX_CUSTOM_PACKS) {
+            return Result.failure(
+                IllegalStateException("แพ็กเกจฟรีสร้างชุดคำศัพท์ AI ได้สูงสุด ${ProEntitlementManager.FREE_MAX_CUSTOM_PACKS} ชุด — อัปเกรดเป็น ShenHan Pro เพื่อสร้างไม่จำกัดครับ")
+            )
+        }
         val parsed = CustomVocabPackManager.parsePackFromText(packName, rawText)
         return parsed.onSuccess { newPack ->
             val updatedPacks = listOf(newPack) + _customPacks.value
@@ -305,6 +315,7 @@ class AppRepository(private val context: Context) {
 
     fun setSubscriptionTier(tier: SubscriptionTier) {
         _subscriptionTier.value = tier
+        ProEntitlementManager.setPro(context, tier.isPro)
     }
 
     fun setAudioSpeed(speed: Float) {

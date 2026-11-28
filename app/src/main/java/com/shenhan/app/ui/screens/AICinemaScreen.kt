@@ -100,6 +100,7 @@ import com.shenhan.app.data.GeminiSuggestion
 import com.shenhan.app.data.GeminiTutorService
 import com.shenhan.app.data.StoredChatMessage
 import com.shenhan.app.data.CinemaChatHistoryStore
+import com.shenhan.app.data.ProEntitlementManager
 import com.shenhan.app.data.SmartNotificationManager
 import com.shenhan.app.model.QuestZone
 import com.shenhan.app.model.ScriptMode
@@ -920,6 +921,10 @@ private fun GeminiInteractiveChatGame(
             )
             isGeminiTyping = false
             res.onSuccess { turn ->
+                if (!isProMember) {
+                    ProEntitlementManager.recordChatTurn(context)
+                    remainingFreeTurns = ProEntitlementManager.getRemainingFreeTurns(context)
+                }
                 onModelResolved(turn.usedModel)
                 val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
                 if (uIdx != -1) {
