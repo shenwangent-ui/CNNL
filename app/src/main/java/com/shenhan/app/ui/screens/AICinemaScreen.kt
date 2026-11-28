@@ -340,7 +340,7 @@ fun AICinemaScreen(
     var chestCharge by remember { mutableIntStateOf(1) }
 
     // สถานะโมเดล AI ที่เชื่อมต่ออัตโนมัติ (ผู้ใช้ไม่ต้องกรอก API Key)
-    var activeModelBadge by remember { mutableStateOf("Gemini 3.8 Flash") }
+    var activeModelBadge by remember { mutableStateOf("Gemini 2.5 Flash") }
 
     LaunchedEffect(requestedModeIndex) {
         val reqIdx = requestedModeIndex
@@ -836,7 +836,7 @@ private fun GeminiInteractiveChatGame(
         val text = rawText.trim()
         if (text.isEmpty() || isGeminiTyping) return
 
-        val historyBefore = chatHistory.map { Pair(it.isUser, it.zhText) }
+        val historyBefore = chatHistory.map { Pair(it.isUser, if (it.thText.isNotBlank() && !it.thText.startsWith("ส่งข้อความ") && !it.thText.startsWith("ตรวจโดย")) "${it.zhText} (${it.thText})" else it.zhText) }
         val userBubbleId = "usr_${System.currentTimeMillis()}"
         chatHistory.add(
             CinemaChatBubble(
