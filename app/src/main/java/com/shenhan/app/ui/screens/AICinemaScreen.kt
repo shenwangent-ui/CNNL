@@ -1,4 +1,8 @@
 package com.shenhan.app.ui.screens
+import com.shenhan.app.R
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -102,7 +106,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class GameArenaMode(val label: String, val icon: ImageVector) {
-    AI_CHAT("แชทเกม Gemini", Icons.Default.AutoAwesome),
+    AI_CHAT("แชทกับผู้ช่วยเฉิน", Icons.Default.AutoAwesome),
     CARD_MATCH("การ์ดจับคู่", Icons.Default.Style),
     FLASHCARDS("การ์ดจำเป็น", Icons.Default.Layers),
     SENTENCE_CARDS("เรียงประโยค", Icons.Default.Extension)
@@ -340,7 +344,7 @@ fun AICinemaScreen(
     var chestCharge by remember { mutableIntStateOf(1) }
 
     // สถานะโมเดล AI ที่เชื่อมต่ออัตโนมัติ (ผู้ใช้ไม่ต้องกรอก API Key)
-    var activeModelBadge by remember { mutableStateOf("Gemini 2.5 Flash") }
+    var activeModelBadge by remember { mutableStateOf("ผู้ช่วยเฉิน") }
 
     LaunchedEffect(requestedModeIndex) {
         val reqIdx = requestedModeIndex
@@ -844,7 +848,7 @@ private fun GeminiInteractiveChatGame(
                 isUser = true,
                 zhText = text,
                 pinyin = "กำลังวิเคราะห์คำตอบ...",
-                thText = "ส่งข้อความให้ Gemini ประเมินผลแล้ว"
+                thText = "ส่งให้ผู้ช่วยเฉินตรวจแล้ว"
             )
         )
         userInput = ""
@@ -865,7 +869,7 @@ private fun GeminiInteractiveChatGame(
                 if (uIdx != -1) {
                     chatHistory[uIdx] = chatHistory[uIdx].copy(
                         pinyin = "ความแม่นยำ ${turn.accuracyPct}%",
-                        thText = "ตรวจโดย ${turn.usedModel}",
+                        thText = "ตรวจโดยผู้ช่วยเฉิน",
                         coachFeedback = turn.coachFeedbackTh,
                         accuracyPct = turn.accuracyPct
                     )
@@ -888,7 +892,7 @@ private fun GeminiInteractiveChatGame(
                     dynamicSuggestions.addAll(turn.suggestions)
                 }
 
-                onReward(25, "Gemini ประเมินผ่าน")
+                onReward(25, "ผู้ช่วยเฉินประเมินผ่าน")
                 if (turn.stepPassed) {
                     passedTurns += 1
                 }
@@ -896,7 +900,7 @@ private fun GeminiInteractiveChatGame(
                     isLessonCompleted = true
                     CinemaGameBridge.completeQuestNode(activeNode.id, 3)
                     onCompleteNode(activeNode.id, 3)
-                    onReward(activeNode.xpReward, "ผ่านด่าน Gemini 3 ดาว!")
+                    onReward(activeNode.xpReward, "ผ่านด่านผู้ช่วยเฉิน 3 ดาว!")
                 }
             }.onFailure { err ->
                 val errMsg = err.message ?: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
@@ -904,7 +908,7 @@ private fun GeminiInteractiveChatGame(
                 if (uIdx != -1) {
                     chatHistory[uIdx] = chatHistory[uIdx].copy(
                         pinyin = "เชื่อมต่อไม่สำเร็จ",
-                        thText = "ตรวจสอบอินเทอร์เน็ตหรือ Supabase Secrets",
+                        thText = "สัญญาณอินเทอร์เน็ตช้า ลองกดส่งอีกครั้งนะครับ",
                         coachFeedback = "⚠️ ระบบแจ้งเตือน: ${errMsg.take(140)}",
                         accuracyPct = 0
                     )
@@ -1056,7 +1060,7 @@ private fun GeminiInteractiveChatGame(
                                             modifier = Modifier.size(11.dp)
                                         )
                                         Text(
-                                            text = "สนทนากับ Gemini",
+                                            text = "คุยกับผู้ช่วยเฉิน",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF38BDF8)
@@ -1120,7 +1124,7 @@ private fun GeminiInteractiveChatGame(
                                         )
                                     }
                                     Text(
-                                        text = if (msg.isUser) "คุณ • ${msg.accuracyPct ?: 90}%" else "Gemini คู่สนทนา",
+                                        text = if (msg.isUser) "คุณ • ${msg.accuracyPct ?: 90}%" else "ผู้ช่วยเฉิน",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (msg.isUser) Color(0xFFBFDBFE) else Color(0xFF38BDF8)
@@ -1178,7 +1182,7 @@ private fun GeminiInteractiveChatGame(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = "Gemini กำลังคิดและพิมพ์คำตอบ...",
+                                text = "ผู้ช่วยเฉินกำลังพิมพ์...",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF38BDF8)
@@ -1211,7 +1215,7 @@ private fun GeminiInteractiveChatGame(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = "ผ่านการวัดผลกับ Gemini เรียบร้อย!",
+                                    text = "ผ่านการวัดผลกับผู้ช่วยเฉินเรียบร้อย!",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF34D399)
@@ -1284,7 +1288,7 @@ private fun GeminiInteractiveChatGame(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "ลิสต์คำตอบแนะนำจาก Gemini:",
+                            text = "คำตอบแนะนำจากผู้ช่วยเฉิน:",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFFBBF24)
@@ -1408,7 +1412,7 @@ private fun GeminiInteractiveChatGame(
                         onValueChange = { userInput = it },
                         placeholder = {
                             Text(
-                                text = "พิมพ์จีนหรือถาม Gemini ได้เลย...",
+                                text = "พิมพ์จีนหรือถามผู้ช่วยเฉินได้เลย...",
                                 fontSize = 13.sp,
                                 color = FrostedSlateMuted
                             )

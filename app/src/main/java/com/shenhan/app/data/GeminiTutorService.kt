@@ -33,9 +33,8 @@ object GeminiTutorService {
     private const val PREFS_NAME = "shenhan_gemini_prefs"
     private const val KEY_API = "gemini_api_key"
     private val MODEL_CANDIDATES = listOf(
-        "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
-        "gemini-2.0-flash"
+        "gemini-2.5-flash"
     )
 
     fun getApiKey(context: Context): String {
@@ -48,7 +47,6 @@ object GeminiTutorService {
         prefs.edit().putString(KEY_API, apiKey.trim()).apply()
     }
 
-    // เชื่อมต่อผ่าน Supabase Edge Function (gemini-tutor) เป็นค่าเริ่มต้น ผู้ใช้ไม่ต้องกรอกคีย์เอง
     fun hasApiKey(context: Context): Boolean = true
 
     suspend fun generateTurn(
@@ -65,43 +63,34 @@ object GeminiTutorService {
         }
 
         val grammarSummary = if (node.grammarNotes.isNotEmpty()) {
-            node.grammarNotes.joinToString("; ") { "${it.pattern} (${it.explain})" }
+            node.grammarNotes.take(2).joinToString("; ") { "${it.pattern} (${it.explain})" }
         } else {
-            "Real-life Mandarin communication & general knowledge"
+            "Practical Mandarin conversation"
         }
 
         val systemPrompt = """
-            You are Google Gemini — an unrestricted, super-intelligent 6-in-1 Mandarin Chinese AI Tutor & All-Round Companion inside the ShenHan app.
-            Current Quest Context (optional backdrop): "${node.titleTh}" (${node.titleZhSimp}) — ${node.descriptionTh}
+            You are "ผู้ช่วยเฉิน" (Chen / 陈助理), a smart, friendly native Mandarin Chinese tutor inside the ShenHan (神漢) app.
+            IDENTITY RULE: Your name is strictly "ผู้ช่วยเฉิน" (หรือ "เฉิน"). NEVER mention Google, Gemini, LLM, or any AI model name.
+            Current Topic: "${node.titleTh}" (${node.titleZhSimp})
             Reference Grammar: "$grammarSummary"
-            Script Mode: Write all Chinese characters strictly in $scriptLabel.
+            Script Mode: Write all Chinese characters in $scriptLabel.
 
-            CRITICAL RULES:
-            - NEVER repeat canned or identical responses. Always respond directly, dynamically, and intelligently to the user's ACTUAL latest message!
-            - UNRESTRICTED & OUT-OF-THE-BOX: If the user asks anything outside the lesson (general knowledge, daily life in China/Taiwan, slang, culture, tech, translation, casual chat, or questions in Thai/English/Chinese), answer their question thoroughly and naturally! Do NOT force them back into a rigid script.
-            - Provide 6-in-1 value in every turn:
-              1. Natural Mandarin reply directly answering what the user just said/asked.
-              2. Accurate Pinyin with tone marks.
-              3. Clear, helpful Thai explanation/answer in "reply_th" (if they asked a question, answer it completely here).
-              4. Multi-skill coaching in "coach_feedback_th" combining:
-                 • ✍️ แก้/เกลาประโยค (Native polish if user wrote Chinese)
-                 • 📖 ศัพท์ & ไวยากรณ์เด่น (Key vocab/grammar breakdown)
-                 • 🇹🇼🇨🇳 เทียบไต้หวัน vs จีนกลาง (Regional usage tip)
-                 • 💡 ตัวอย่างเสริม (1 extra practical sentence)
-              5. Score accuracy (65-100).
-              6. Generate 4 diverse next-turn suggestions in "suggestions" (covering direct reply, deep follow-up, out-of-the-box question, and native slang).
+            RULES:
+            - Respond directly, naturally, and fast to the user's ACTUAL latest message (never repeat canned answers).
+            - Answer ANY topic (in-lesson roleplay, general questions, slang, Taiwan vs Mainland usage, or Thai/Chinese chat).
+            - Keep explanations concise, practical, and easy to read on mobile.
 
-            Respond ONLY with valid JSON matching this schema:
+            Return ONLY valid JSON:
             {
-              "reply_zh": "Dynamic Chinese response in $scriptLabel",
-              "reply_pinyin": "Full Pinyin with tone marks",
-              "reply_th": "Complete natural Thai translation and direct answer to the user's message",
-              "coach_feedback_th": "✍️ เกลาประโยค: ... | 📖 ศัพท์/ไวยากรณ์: ... | 🇹🇼🇨🇳 ไต้หวัน-จีน: ... | 💡 ตัวอย่าง: ...",
+              "reply_zh": "Natural Chinese reply in $scriptLabel",
+              "reply_pinyin": "Pinyin with tone marks",
+              "reply_th": "Clear Thai translation and direct answer",
+              "coach_feedback_th": "✍️ เกลาประโยค: ... | 📖 ศัพท์/ไวยากรณ์: ... | 🇹🇼🇨🇳 ไต้หวัน-จีน: ...",
               "accuracy_pct": 94,
               "step_passed": true,
               "suggestions": [
                 {"zh": "Option 1 in $scriptLabel", "pinyin": "Pinyin 1", "th": "Thai 1", "tag": "🎯 ตอบตรงเรื่อง"},
-                {"zh": "Option 2 in $scriptLabel", "pinyin": "Pinyin 2", "th": "Thai 2", "tag": "💬 ถามเจาะลึก"},
+                {"zh": "Option 2 in $scriptLabel", "pinyin": "Pinyin 2", "th": "Thai 2", "tag": "💬 ถามต่อ"},
                 {"zh": "Option 3 in $scriptLabel", "pinyin": "Pinyin 3", "th": "Thai 3", "tag": "🚀 ถามนอกกรอบ"},
                 {"zh": "Option 4 in $scriptLabel", "pinyin": "Pinyin 4", "th": "Thai 4", "tag": "😎 สำนวนเจ้าถิ่น"}
               ]
@@ -109,13 +98,13 @@ object GeminiTutorService {
         """.trimIndent()
 
         val promptText = if (latestUserMessage.isNullOrBlank()) {
-            "ทักทายเปิดฉากสถานการณ์ '${node.titleTh}' แบบเป็นธรรมชาติ พร้อมบอกผู้ใช้ว่าพิมพ์ถามได้ทุกเรื่องทั้งในบทและนอกกรอบ และสร้าง 4 ตัวเลือกเริ่มต้น"
+            "แนะนำตัวสั้นๆ ในฐานะ 'ผู้ช่วยเฉิน' เปิดฉากหัวข้อ '${node.titleTh}' และสร้าง 4 ตัวเลือกเริ่มต้น"
         } else {
             latestUserMessage
         }
 
         val rawTurns = mutableListOf<Pair<String, String>>()
-        for ((isUser, text) in historyPairs.takeLast(10)) {
+        for ((isUser, text) in historyPairs.takeLast(6)) {
             val clean = text.trim()
             if (clean.isNotEmpty()) {
                 rawTurns.add(Pair(if (isUser) "user" else "model", clean))
@@ -124,7 +113,7 @@ object GeminiTutorService {
         rawTurns.add(Pair("user", promptText))
 
         if (rawTurns.first().first != "user") {
-            rawTurns.add(0, Pair("user", "หัวข้อเริ่มต้น: ${node.titleTh}"))
+            rawTurns.add(0, Pair("user", "หัวข้อ: ${node.titleTh}"))
         }
 
         val normalizedTurns = mutableListOf<Pair<String, String>>()
@@ -151,12 +140,14 @@ object GeminiTutorService {
             put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemPrompt))))
             put("contents", contentsArray)
             put("generationConfig", JSONObject().apply {
-                put("temperature", 0.85)
+                put("temperature", 0.75)
+                put("maxOutputTokens", 750)
                 put("responseMimeType", "application/json")
+                put("thinkingConfig", JSONObject().put("thinkingBudget", 0))
             })
         }
 
-        fun parseGeminiResponse(rawResponse: String, modelUsed: String): GeminiTurnResult {
+        fun parseResponse(rawResponse: String): GeminiTurnResult {
             val root = JSONObject(rawResponse)
             val rawText = root.getJSONArray("candidates")
                 .getJSONObject(0)
@@ -193,20 +184,19 @@ object GeminiTutorService {
             }
 
             return GeminiTurnResult(
-                replyZh = parsed.optString("reply_zh", "你好！有什么我可以帮你的吗？"),
-                replyPinyin = parsed.optString("reply_pinyin", "Nǐ hǎo! Yǒu shénme wǒ kěyǐ bāng nǐ de ma?"),
-                replyTh = parsed.optString("reply_th", "สวัสดี! มีอะไรให้ฉันช่วยไหม?"),
-                coachFeedbackTh = parsed.optString("coach_feedback_th", "✨ Gemini 6-in-1 พร้อมตอบทุกคำถามทั้งในและนอกบทเรียน"),
+                replyZh = parsed.optString("reply_zh", "你好！我是陈助理，有什么我可以帮你的吗？"),
+                replyPinyin = parsed.optString("reply_pinyin", "Nǐ hǎo! Wǒ shì Chén zhùlǐ, yǒu shénme wǒ kěyǐ bāng nǐ de ma?"),
+                replyTh = parsed.optString("reply_th", "สวัสดีครับ! ผมผู้ช่วยเฉิน มีอะไรให้ผมช่วยไหมครับ?"),
+                coachFeedbackTh = parsed.optString("coach_feedback_th", "ผู้ช่วยเฉินพร้อมสนทนาและตอบคำถามทุกเรื่องครับ"),
                 accuracyPct = parsed.optInt("accuracy_pct", 92).coerceIn(50, 100),
                 stepPassed = parsed.optBoolean("step_passed", true),
                 suggestions = suggestions.take(4),
-                usedModel = modelUsed
+                usedModel = "ผู้ช่วยเฉิน"
             )
         }
 
-        var lastError: Exception = Exception("Supabase Edge Function request failed")
+        var lastError: Exception = Exception("การเชื่อมต่อล่าช้า")
 
-        // 1. ยิงผ่าน Supabase Edge Function (ใช้ GEMINI_API_KEY จาก Supabase Secrets อัตโนมัติ)
         try {
             val edgeUrl = "${SupabaseSyncManager.SUPABASE_URL}/functions/v1/gemini-tutor"
             val edgeBody = JSONObject().put("payload", geminiPayloadObj).toString()
@@ -216,7 +206,7 @@ object GeminiTutorService {
                 setRequestProperty("apikey", SupabaseSyncManager.SUPABASE_ANON_KEY)
                 setRequestProperty("Authorization", "Bearer ${SupabaseSyncManager.SUPABASE_ANON_KEY}")
                 connectTimeout = 15000
-                readTimeout = 30000
+                readTimeout = 45000
                 doOutput = true
             }
 
@@ -229,16 +219,14 @@ object GeminiTutorService {
                 conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             } else {
                 val errText = conn.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-                throw Exception("Supabase Edge HTTP $code: $errText")
+                throw Exception("HTTP $code: $errText")
             }
 
-            val usedModel = conn.getHeaderField("X-Used-Model")?.takeIf { it.isNotBlank() } ?: "gemini-2.5-flash"
-            return@withContext Result.success(parseGeminiResponse(rawResponse, usedModel))
+            return@withContext Result.success(parseResponse(rawResponse))
         } catch (e: Exception) {
             lastError = e
         }
 
-        // 2. ระบบสำรอง: หากผู้ใช้ตั้งค่าคีย์ส่วนตัวในเครื่องไว้ ให้ยิงตรงเข้า Google Gemini API
         val localKey = getApiKey(context)
         if (localKey.isNotBlank()) {
             val directBody = geminiPayloadObj.toString()
@@ -249,7 +237,7 @@ object GeminiTutorService {
                         requestMethod = "POST"
                         setRequestProperty("Content-Type", "application/json; charset=UTF-8")
                         connectTimeout = 15000
-                        readTimeout = 25000
+                        readTimeout = 45000
                         doOutput = true
                     }
 
@@ -261,11 +249,10 @@ object GeminiTutorService {
                     val rawResponse = if (code in 200..299) {
                         conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
                     } else {
-                        val errText = conn.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-                        throw Exception("HTTP $code ($modelName): $errText")
+                        throw Exception("HTTP $code")
                     }
 
-                    return@withContext Result.success(parseGeminiResponse(rawResponse, modelName))
+                    return@withContext Result.success(parseResponse(rawResponse))
                 } catch (e: Exception) {
                     lastError = e
                 }
