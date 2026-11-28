@@ -101,6 +101,8 @@ class MainActivity : ComponentActivity() {
         appRepository = AppRepository(this)
 
         setContent {
+            com.shenhan.app.ui.components.InAppUpdateOverlay()
+
             MyApplicationTheme {
                 val density = LocalDensity.current
                 CompositionLocalProvider(
