@@ -1,4 +1,6 @@
 package com.shenhan.app
+import com.shenhan.app.data.InAppAutoUpdater
+import android.widget.Toast
 import com.shenhan.app.data.SmartNotificationManager
 import com.shenhan.app.data.AppUpdateRelease
 import androidx.compose.material3.TextButton
@@ -123,6 +125,14 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(Unit) {
+                val updatedVer = InAppAutoUpdater.consumeJustUpdatedTag(this@MainActivity)
+                if (updatedVer != null || intent?.getBooleanExtra(InAppAutoUpdater.EXTRA_UPDATE_COMPLETED, false) == true) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "✅ อัปเดต ShenHan ${updatedVer ?: "เวอร์ชันใหม่"} เสร็จสมบูรณ์แล้ว!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
                 SmartNotificationManager.checkForAppUpdate(this@MainActivity, notifyTopBar = true)
                 SmartNotificationManager.checkPromotionsAndNews(this@MainActivity)
             }

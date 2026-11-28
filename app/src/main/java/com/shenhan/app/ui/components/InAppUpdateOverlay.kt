@@ -1,18 +1,23 @@
 package com.shenhan.app.ui.components
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -22,11 +27,14 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.shenhan.app.data.InAppAutoUpdater
+import com.shenhan.app.data.UpdateInstallStatusReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -48,21 +56,26 @@ fun InAppUpdateOverlay() {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var availableRelease by remember { mutableStateOf<AppReleaseInfo?>(null) }
+    var autoInstallConsent by remember {
+        mutableStateOf(InAppAutoUpdater.isAutoInstallConsented(context))
+    }
     var isDownloading by remember { mutableStateOf(false) }
+    var isInstalling by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableFloatStateOf(0f) }
     var downloadedMbText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var pendingApkFile by remember { mutableStateOf<File?>(null) }
 
-    fun launchApkInstaller(apkFile: File) {
+    fun executeInstall(apkFile: File, releaseName: String) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 !context.packageManager.canRequestPackageInstalls()
             ) {
                 pendingApkFile = apkFile
+                isInstalling = false
                 Toast.makeText(
                     context,
-                    "กรุณาเปิดสวิตช์ 'อนุญาตจากแหล่งที่มา' แล้วกดย้อนกลับเพื่อติดตั้ง",
+                    "กรุณาเปิดสวิตช์ 'อนุญาตจากแหล่งที่มา' แล้วกดย้อนกลับเพื่อติดตั้งอัตโนมัติ",
                     Toast.LENGTH_LONG
                 ).show()
                 val permIntent = Intent(
@@ -75,32 +88,71 @@ fun InAppUpdateOverlay() {
                 return
             }
 
-            val apkUri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                apkFile
-            )
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(apkUri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (autoInstallConsent) {
+                isInstalling = true
+                InAppAutoUpdater.markPendingRelaunch(context, releaseName, true)
+
+                val packageInstaller = context.packageManager.packageInstaller
+                val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+                    setAppPackageName(context.packageName)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+                    }
+                }
+
+                val sessionId = packageInstaller.createSession(params)
+                val session = packageInstaller.openSession(sessionId)
+
+                FileInputStream(apkFile).use { apkIn ->
+                    session.openWrite("shenhan_base_apk", 0, apkFile.length()).use { sessionOut ->
+                        apkIn.copyTo(sessionOut)
+                        session.fsync(sessionOut)
+                    }
+                }
+
+                val statusIntent = Intent(context, UpdateInstallStatusReceiver::class.java)
+                val piFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                } else {
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                }
+                val statusPendingIntent = PendingIntent.getBroadcast(context, sessionId, statusIntent, piFlags)
+                session.commit(statusPendingIntent.intentSender)
+                session.close()
+                pendingApkFile = null
+            } else {
+                InAppAutoUpdater.markPendingRelaunch(context, "", false)
+                val apkUri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    apkFile
+                )
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(installIntent)
+                pendingApkFile = null
+                isInstalling = false
             }
-            context.startActivity(installIntent)
-            pendingApkFile = null
         } catch (e: Exception) {
+            isInstalling = false
+            InAppAutoUpdater.markPendingRelaunch(context, "", false)
             errorMessage = "เปิดหน้าติดตั้งไม่สำเร็จ: ${e.message}"
         }
     }
 
-    // เมื่อผู้ใช้ไปกดอนุญาตติดตั้งแอปภายนอกแล้วกดกลับมาที่แอป ให้เด้งหน้าติดตั้งต่อทันที
+    // เมื่อผู้ใช้ไปกดอนุญาตติดตั้งแอปนอกสโตร์แล้วกดย้อนกลับมาที่แอป ให้ติดตั้งต่อทันที
     DisposableEffect(lifecycleOwner, pendingApkFile) {
         val observer = LifecycleEventObserver { _, event ->
             val queued = pendingApkFile
+            val relName = availableRelease?.releaseName ?: "เวอร์ชันใหม่"
             if (event == Lifecycle.Event.ON_RESUME && queued != null && queued.exists()) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
                     context.packageManager.canRequestPackageInstalls()
                 ) {
-                    launchApkInstaller(queued)
+                    executeInstall(queued, relName)
                 }
             }
         }
@@ -108,7 +160,7 @@ fun InAppUpdateOverlay() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // เช็กเวอร์ชันใหม่อัตโนมัติทันทีที่เปิดแอป
+    // เช็กเวอร์ชันอัปเดตอัตโนมัติทันทีที่เปิดแอป
     LaunchedEffect(Unit) {
         val found = checkLatestGithubRelease(context)
         if (found != null) {
@@ -117,10 +169,11 @@ fun InAppUpdateOverlay() {
     }
 
     val release = availableRelease ?: return
+    val isBusy = isDownloading || isInstalling
 
     AlertDialog(
         onDismissRequest = {
-            if (!isDownloading) {
+            if (!isBusy) {
                 availableRelease = null
             }
         },
@@ -128,7 +181,7 @@ fun InAppUpdateOverlay() {
         shape = RoundedCornerShape(20.dp),
         title = {
             Text(
-                text = "🚀 พบอัปเดตเวอร์ชันใหม่!",
+                text = if (isInstalling) "⚙️ กำลังติดตั้งอัปเดต..." else "🚀 พบอัปเดตเวอร์ชันใหม่!",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
@@ -142,7 +195,22 @@ fun InAppUpdateOverlay() {
                     fontSize = 13.sp
                 )
 
-                if (isDownloading) {
+                if (isInstalling) {
+                    LinearProgressIndicator(
+                        color = Color(0xFF38BDF8),
+                        trackColor = Color(0xFF1E293B),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+                    Text(
+                        text = "กำลังติดตั้งลงในเครื่อง แอปจะปิดตัวลงชั่วคราวและจะเด้งเปิดกลับมาอัตโนมัติทันทีที่ติดตั้งเสร็จสิ้นครับ",
+                        color = Color(0xFF7DD3FC),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                } else if (isDownloading) {
                     LinearProgressIndicator(
                         progress = { downloadProgress },
                         color = Color(0xFF38BDF8),
@@ -150,6 +218,7 @@ fun InAppUpdateOverlay() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
                     )
                     Text(
                         text = "กำลังดาวน์โหลดไฟล์ติดตั้ง... $downloadedMbText (${(downloadProgress * 100).toInt()}%)",
@@ -158,8 +227,46 @@ fun InAppUpdateOverlay() {
                         fontWeight = FontWeight.SemiBold
                     )
                 } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1E293B))
+                            .clickable {
+                                val nextVal = !autoInstallConsent
+                                autoInstallConsent = nextVal
+                                InAppAutoUpdater.setAutoInstallConsented(context, nextVal)
+                            }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Checkbox(
+                            checked = autoInstallConsent,
+                            onCheckedChange = { checked ->
+                                autoInstallConsent = checked
+                                InAppAutoUpdater.setAutoInstallConsented(context, checked)
+                            },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF2563EB),
+                                uncheckedColor = Color(0xFF94A3B8),
+                                checkmarkColor = Color.White
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "อนุญาตให้ติดตั้งและเปิดแอปกลับอัตโนมัติ (จำค่านี้ไว้ทุกครั้ง)",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
                     Text(
-                        text = "กด 'อัปเดตเลย' เพื่อดาวน์โหลดและติดตั้ง เมื่อติดตั้งเสร็จกด 'เปิด' แอปจะรีสตาร์ทเข้าเวอร์ชันใหม่ทันที",
+                        text = if (autoInstallConsent) {
+                            "กด 'อัปเดตเลย' ระบบจะโหลดและติดตั้งให้เอง แอปจะปิดชั่วคราวแล้วเด้งเปิดกลับมาเมื่อเสร็จครับ"
+                        } else {
+                            "กด 'อัปเดตเลย' เพื่อดาวน์โหลดไฟล์ จากนั้นกดยืนยันติดตั้งด้วยตนเอง"
+                        },
                         color = Color(0xFF94A3B8),
                         fontSize = 12.sp
                     )
@@ -176,7 +283,7 @@ fun InAppUpdateOverlay() {
         },
         confirmButton = {
             Button(
-                enabled = !isDownloading,
+                enabled = !isBusy,
                 onClick = {
                     errorMessage = null
                     isDownloading = true
@@ -192,7 +299,7 @@ fun InAppUpdateOverlay() {
                         }
                         isDownloading = false
                         fileRes.onSuccess { apkFile ->
-                            launchApkInstaller(apkFile)
+                            executeInstall(apkFile, release.releaseName)
                         }.onFailure { err ->
                             errorMessage = err.message ?: "ดาวน์โหลดไม่สำเร็จ"
                         }
@@ -202,14 +309,18 @@ fun InAppUpdateOverlay() {
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = if (isDownloading) "กำลังโหลด..." else "อัปเดตเลย",
+                    text = when {
+                        isInstalling -> "กำลังติดตั้ง..."
+                        isDownloading -> "กำลังโหลด..."
+                        else -> "อัปเดตเลย"
+                    },
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
         },
         dismissButton = {
-            if (!isDownloading) {
+            if (!isBusy) {
                 OutlinedButton(
                     onClick = { availableRelease = null },
                     border = BorderStroke(1.dp, Color(0xFF334155)),
@@ -228,7 +339,7 @@ private suspend fun checkLatestGithubRelease(context: Context): AppReleaseInfo? 
             val pkgInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.packageManager.getPackageInfo(
                     context.packageName,
-                    PackageManager.PackageInfoFlags.of(0)
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0)
                 )
             } else {
                 @Suppress("DEPRECATION")
@@ -272,7 +383,6 @@ private suspend fun checkLatestGithubRelease(context: Context): AppReleaseInfo? 
             }
             val remoteTimeMs = utcParser.parse(updatedAtStr)?.time ?: return@withContext null
 
-            // แจ้งเตือนเมื่อไฟล์ APK บน GitHub ถูกบิลด์ใหม่กว่าเวลาที่ติดตั้งแอปบนเครื่องเกิน 90 วินาที
             if (remoteTimeMs > installedTimeMs + 90_000L) {
                 val localFmt = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 AppReleaseInfo(
@@ -297,7 +407,7 @@ private suspend fun downloadApkToCache(
 ): Result<File> = withContext(Dispatchers.IO) {
     try {
         val updatesDir = File(context.cacheDir, "updates").apply { mkdirs() }
-        val outFile = File(updatesDir, "ShenHan-update.apk")
+        val outFile = File(updatesDir, "shenhan-update.apk")
         if (outFile.exists()) outFile.delete()
 
         val conn = (URL(downloadUrl).openConnection() as HttpURLConnection).apply {
