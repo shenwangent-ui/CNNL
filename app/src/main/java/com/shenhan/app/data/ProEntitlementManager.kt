@@ -6,7 +6,7 @@ import java.util.Date
 import java.util.Locale
 
 object ProEntitlementManager {
-    private const val PREFS_NAME = "shenhan_pro_entitlements_v1"
+    private const val PREFS_NAME = "shenhan_pro_entitlements_v2"
     private const val KEY_IS_PRO = "is_pro_member"
     private const val KEY_CHAT_DATE = "daily_chat_date"
     private const val KEY_CHAT_COUNT = "daily_chat_count"

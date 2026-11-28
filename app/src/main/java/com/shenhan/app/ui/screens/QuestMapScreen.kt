@@ -161,6 +161,7 @@ fun QuestMapScreen(
     var isAnswerSubmitted by remember { mutableStateOf(false) }
 
     var isProMember by remember { mutableStateOf(ProEntitlementManager.isPro(context)) }
+    var selectedLessonNode by remember { mutableStateOf<QuestNode?>(null) }
     var lockedHskTitle by remember { mutableStateOf<String?>(null) }
     val rawZone = questZones.getOrNull(selectedZoneIndex) ?: questZones.firstOrNull() ?: return
     val isZoneHsk4to6 = rawZone.hskLevel in setOf(HskLevel.HSK4, HskLevel.HSK5, HskLevel.HSK6)
@@ -210,6 +211,28 @@ fun QuestMapScreen(
                 }
             }
         )
+    }
+
+    val activeLessonNode = selectedLessonNode
+    if (activeLessonNode != null) {
+        LessonDetailScreen(
+            node = activeLessonNode,
+            scriptMode = scriptMode,
+            onBack = { selectedLessonNode = null },
+            onSpeak = { textToSpeak ->
+                ttsEngine?.speak(
+                    textToSpeak,
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "lesson_tts_${System.currentTimeMillis()}"
+                )
+            },
+            onCompleteLesson = { starsEarned ->
+                onCompleteNode(activeLessonNode.id, starsEarned)
+                selectedLessonNode = null
+            }
+        )
+        return
     }
 
     LazyColumn(
@@ -439,12 +462,40 @@ fun QuestMapScreen(
         // Zone Selector Tabs (HSK 1, HSK 2, HSK 3-4, etc.)
         item {
             Column {
-                Text(
-                    text = "เลือกโซนแผนที่การเรียนรู้ (HSK Quest Map)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "เลือกโซนแผนที่ (HSK 3.0)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Surface(
+                        onClick = {
+                            if (isProMember) {
+                                ProEntitlementManager.setPro(context, false)
+                                isProMember = false
+                                Toast.makeText(context, "สลับเป็นโหมดสายฟรี: ล็อก HSK 4–6 แล้ว", Toast.LENGTH_SHORT).show()
+                            } else {
+                                lockedHskTitle = "HSK 4–6"
+                            }
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isProMember) Color(0x3310B981) else Color(0x33F59E0B),
+                        border = BorderStroke(1.dp, if (isProMember) Color(0xFF10B981) else Color(0xFFF59E0B))
+                    ) {
+                        Text(
+                            text = if (isProMember) "👑 Pro (กดเพื่อเทสต์สายฟรี)" else "🔒 สายฟรี (HSK 4–6 ล็อก)",
+                            color = if (isProMember) Color(0xFF6EE7B7) else Color(0xFFFBBF24),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -640,52 +691,20 @@ fun QuestMapScreen(
             )
         }
 
-        items(currentZone.nodes) { node ->
+        items(currentZone.nodes) { rawNode ->
+            val nodeLockedForFree = !isProMember && isZoneHsk4to6
+            val displayNode = rawNode.copy(isUnlocked = !nodeLockedForFree)
             QuestNodeCard(
-                node = node,
+                node = displayNode,
                 scriptMode = scriptMode,
                 onNodeClick = {
-                    if (!node.isUnlocked && node.starsEarned == 0) {
-                        lockedHskTitle = currentZone.hskLevel.name
-                    } else if (node.dialogueTurns.isNotEmpty()) {
-                        activeDialogueNode = node
-                        dialogueStepIndex = 0
-                        val firstLine = node.dialogueTurns.firstOrNull()
-                        if (firstLine != null) {
-                            val speakText = if (scriptMode == ScriptMode.SIMPLIFIED) firstLine.hans else firstLine.hant
-                            ttsEngine?.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "turn_0")
-                        }
+                    if (nodeLockedForFree) {
+                        lockedHskTitle = "${currentZone.hskLevel.title} (${currentZone.hskLevel.wordCount} คำ)"
                     } else {
-                        when (node.nodeType) {
-                            com.shenhan.app.model.QuestNodeType.TONE_DRILL -> onNavigateToLab()
-                            com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToLab()
-                            com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> {
-                                CinemaGameBridge.openNodeInCinema(node.id)
-                                onNavigateToCinema()
-                            }
-                            com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER,
-                            com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> {
-                                activeNodeId = node.id
-                                activeQuizQuestion = SampleData.sampleQuizQuestions.random()
-                                selectedAnswerIndex = null
-                                isAnswerSubmitted = false
-                            }
-                        }
-                    }
-                },
-                onOpenInCinema = {
-                    if (!node.isUnlocked && node.starsEarned == 0) {
-                        lockedHskTitle = currentZone.hskLevel.name
-                    } else {
-                        CinemaGameBridge.openNodeInCinema(node.id)
-                        onNavigateToCinema()
+                        selectedLessonNode = displayNode
                     }
                 }
             )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
