@@ -293,7 +293,7 @@ fun LessonDetailScreen(
                             )
                             TextButton(onClick = {
                                 val fullText = node.dialogueTurns.joinToString("。") {
-                                    if (scriptMode == ScriptMode.SIMPLIFIED) it.hanzi else it.hant
+                                    if (scriptMode == ScriptMode.SIMPLIFIED) it.hans else it.hant
                                 }
                                 onSpeak(fullText)
                             }) {
@@ -303,7 +303,7 @@ fun LessonDetailScreen(
                     }
 
                     items(node.dialogueTurns) { line ->
-                        val zhLine = if (scriptMode == ScriptMode.SIMPLIFIED) line.hanzi else line.hant
+                        val zhLine = if (scriptMode == ScriptMode.SIMPLIFIED) line.hans else line.hant
                         Card(
                             shape = RoundedCornerShape(16.dp),
                             border = BorderStroke(1.dp, Color(0xFF243147)),
@@ -484,11 +484,11 @@ fun LessonDetailScreen(
                     listOf(
                         GrammarNote(
                             pattern = "主语 + 动词 + 宾语 (ประธาน + กริยา + กรรม)",
-                            explanation = "โครงสร้างประโยคพื้นฐานในภาษาจีน เรียงลำดับคล้ายภาษาไทย เช่น 我学习汉语 (ฉันเรียนภาษาจีน)"
+                            explain = "โครงสร้างประโยคพื้นฐานในภาษาจีน เรียงลำดับคล้ายภาษาไทย เช่น 我学习汉语 (ฉันเรียนภาษาจีน)"
                         ),
                         GrammarNote(
                             pattern = "คำกริยา + 吗 (ma) ?",
-                            explanation = "เติม 吗 ท้ายประโยคบอกเล่าเพื่อเปลี่ยนเป็นประโยคคำถามใช่หรือไม่ เช่น 你好吗？(คุณสบายดีไหม)"
+                            explain = "เติม 吗 ท้ายประโยคบอกเล่าเพื่อเปลี่ยนเป็นประโยคคำถามใช่หรือไม่ เช่น 你好吗？(คุณสบายดีไหม)"
                         )
                     )
                 }
@@ -508,7 +508,7 @@ fun LessonDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = note.explanation,
+                                text = note.explain,
                                 color = Color(0xFFE2E8F0),
                                 fontSize = 13.sp,
                                 lineHeight = 20.sp
@@ -735,7 +735,7 @@ private fun buildLessonQuizItems(
 
     if (result.isEmpty() && node.dialogueTurns.isNotEmpty()) {
         val line = node.dialogueTurns.first()
-        val zh = if (scriptMode == ScriptMode.SIMPLIFIED) line.hanzi else line.hant
+        val zh = if (scriptMode == ScriptMode.SIMPLIFIED) line.hans else line.hant
         result.add(
             LessonQuizItem(
                 prompt = "ประโยค \"$zh\" ตรงกับความหมายใด?",
