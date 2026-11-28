@@ -89,7 +89,7 @@ class AppRepository(private val context: Context) {
     }
 
     private fun buildZeroVocabList(): List<VocabWord> {
-        val base = SampleData.vocabList.map { word ->
+        val base = Hsk3StandardBank.getAllVocab(context).map { word ->
             word.copy(
                 srsStage = 0,
                 mastery = SrsMastery.NEW,

@@ -1,4 +1,7 @@
 package com.shenhan.app.ui.screens
+import com.shenhan.app.ui.components.PinyinCompleteModule
+import com.shenhan.app.data.Hsk3StandardBank
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -45,18 +48,27 @@ fun LessonDetailScreen(
     onSpeak: (String) -> Unit,
     onCompleteLesson: (Int) -> Unit
 ) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val lessonVocab = remember(node.id, node.hskLevel) {
-        val matched = SampleData.vocabList.filter { it.hskLevel == node.hskLevel }
-        val pool = matched.ifEmpty { SampleData.vocabList }
-        val offset = (node.id.hashCode().let { if (it < 0) -it else it }) % (pool.size.coerceAtLeast(1))
-        val rotated = pool.drop(offset) + pool.take(offset)
-        rotated.take(8)
+    val allStandardVocab = remember(context) { Hsk3StandardBank.getAllVocab(context) }
+    val cumulativeVocab = remember(context, node.hskLevel) {
+        Hsk3StandardBank.getCumulativeVocabUpTo(context, node.hskLevel)
+    }
+    val survivalCombos = remember(node.hskLevel) {
+        Hsk3StandardBank.getSurvivalComboSentences(node.hskLevel)
     }
 
-    val quizItems = remember(node.id, lessonVocab) {
-        buildLessonQuizItems(node, lessonVocab, scriptMode)
+    val lessonVocab = remember(node.id, node.hskLevel, allStandardVocab) {
+        val matched = allStandardVocab.filter { it.hskLevel == node.hskLevel }
+        val pool = matched.ifEmpty { allStandardVocab }
+        val offset = (node.id.hashCode().let { if (it < 0) -it else it }) % (pool.size.coerceAtLeast(1))
+        val rotated = pool.drop(offset) + pool.take(offset)
+        rotated.take(10)
+    }
+
+    val quizItems = remember(node.id, lessonVocab, cumulativeVocab) {
+        buildLessonQuizItems(node, lessonVocab, cumulativeVocab, scriptMode)
     }
 
     var quizIndex by remember { mutableIntStateOf(0) }
@@ -276,8 +288,80 @@ fun LessonDetailScreen(
         }
 
         when (selectedTab) {
-            // แท็บ 1: บทสนทนาประจำบท + คำศัพท์สำคัญประจำระดับ
+            // แท็บ 1: พินอินครบชุด (ด่านแรก HSK 1) + บทสนทนา + คำศัพท์ประจำบท + ผสมคำศัพท์สะสมข้ามระดับ
             0 -> {
+                if (node.id == "node_1_1" || node.nodeType == QuestNodeType.TONE_DRILL) {
+                    item {
+                        PinyinCompleteModule(onSpeak = onSpeak)
+                    }
+                }
+
+                item {
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        border = BorderStroke(1.dp, Color(0xFF10B981)),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0E2120))
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            val cumulativeLevelsText = (1..node.hskLevel.level).joinToString(" + ") { "HSK $it" }
+                            Text(
+                                text = "🔗 คลังคำศัพท์สะสมรวมระดับ: $cumulativeLevelsText",
+                                color = Color(0xFF6EE7B7),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = "นำคำศัพท์ที่เรียนผ่านมาแล้วมารวมกับระดับปัจจุบัน เพื่อฝึกสร้างประโยคเอาตัวรอดจริง",
+                                color = Color(0xFFA7F3D0),
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            survivalCombos.forEach { combo ->
+                                val comboZh = if (scriptMode == ScriptMode.SIMPLIFIED) combo.simplified else combo.traditional
+                                Surface(
+                                    onClick = { onSpeak(comboZh) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF132D2B),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(
+                                            text = "🔊 ${combo.sourceLevelsLabel}",
+                                            color = Color(0xFFFBBF24),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = comboZh,
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = combo.pinyin,
+                                            color = Color(0xFF7DD3FC),
+                                            fontSize = 12.sp
+                                        )
+                                        Text(
+                                            text = combo.meaningTh,
+                                            color = Color(0xFFE2E8F0),
+                                            fontSize = 12.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(3.dp))
+                                        Text(
+                                            text = "โครงสร้างคำผสม: ${combo.vocabBreakdown}",
+                                            color = Color(0xFF6EE7B7),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (node.dialogueTurns.isNotEmpty()) {
                     item {
                         Row(
@@ -712,12 +796,16 @@ fun LessonDetailScreen(
 private fun buildLessonQuizItems(
     node: QuestNode,
     vocab: List<VocabWord>,
+    cumulativeVocab: List<VocabWord>,
     scriptMode: ScriptMode
 ): List<LessonQuizItem> {
     val result = mutableListOf<LessonQuizItem>()
-    val allDistractors = SampleData.vocabList.map { it.meaningTh }.distinct()
+    val allDistractors = cumulativeVocab.map { it.meaningTh }.distinct()
 
-    for (w in vocab.take(4)) {
+    val earlierWords = cumulativeVocab.filter { it.hskLevel.level < node.hskLevel.level }.shuffled().take(2)
+    val quizPool = (vocab.take(3) + earlierWords).distinctBy { it.simplified }
+
+    for (w in quizPool) {
         val hanzi = if (scriptMode == ScriptMode.SIMPLIFIED) w.simplified else w.traditional
         val wrongChoices = allDistractors.filter { it != w.meaningTh }.shuffled().take(3)
         val options = (wrongChoices + w.meaningTh).shuffled()
