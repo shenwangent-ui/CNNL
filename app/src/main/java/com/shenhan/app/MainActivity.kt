@@ -1,4 +1,12 @@
 package com.shenhan.app
+import com.shenhan.app.data.SmartNotificationManager
+import com.shenhan.app.data.AppUpdateRelease
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.core.app.ActivityCompat
+import android.os.Build
+import android.Manifest
 
 import android.content.Context
 import android.content.Intent
@@ -92,6 +100,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        SmartNotificationManager.createNotificationChannels(this)
+        SmartNotificationManager.markStudiedToday(this)
+        SmartNotificationManager.scheduleSmartDailyReminder(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !SmartNotificationManager.hasNotificationPermission(this)
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 901)
+        }
         RealAuthManager.ensureFirebaseInitialized(this)
         configureAppCheck(this, intent)
         intent?.data?.let { RealAuthManager.pendingDeepLinkUri = it }
@@ -101,6 +117,45 @@ class MainActivity : ComponentActivity() {
         appRepository = AppRepository(this)
 
         setContent {
+            var pendingUpdateRelease by remember { mutableStateOf<AppUpdateRelease?>(null) }
+            var showUpdateDialog by remember {
+                mutableStateOf(intent?.getBooleanExtra(SmartNotificationManager.EXTRA_OPEN_UPDATE, false) == true)
+            }
+
+            LaunchedEffect(Unit) {
+                val rel = SmartNotificationManager.checkForAppUpdate(this@MainActivity, notifyTopBar = true)
+                if (rel != null) {
+                    pendingUpdateRelease = rel
+                    showUpdateDialog = true
+                }
+                SmartNotificationManager.checkPromotionsAndNews(this@MainActivity)
+            }
+
+            if (showUpdateDialog && pendingUpdateRelease != null) {
+                val rel = pendingUpdateRelease!!
+                AlertDialog(
+                    onDismissRequest = { showUpdateDialog = false },
+                    title = { Text("🚀 อัปเดตเวอร์ชันใหม่ (${rel.versionTag})") },
+                    text = {
+                        Text(
+                            "มีฟีเจอร์และการปรับปรุงใหม่พร้อมติดตั้งแล้ว:\n\n${rel.notes}\n\nกด 'อัปเดตทันที' เพื่อดาวน์โหลดและติดตั้งทับเวอร์ชันเดิมได้เลยครับ"
+                        )
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            showUpdateDialog = false
+                            SmartNotificationManager.startApkUpdateDownload(this@MainActivity, rel)
+                        }) {
+                            Text("อัปเดตทันที")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showUpdateDialog = false }) {
+                            Text("ไว้ภายหลัง")
+                        }
+                    }
+                )
+            }
             com.shenhan.app.ui.components.InAppUpdateOverlay()
 
             MyApplicationTheme {

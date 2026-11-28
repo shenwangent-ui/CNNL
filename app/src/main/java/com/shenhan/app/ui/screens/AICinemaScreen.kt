@@ -100,6 +100,7 @@ import com.shenhan.app.data.GeminiSuggestion
 import com.shenhan.app.data.GeminiTutorService
 import com.shenhan.app.data.StoredChatMessage
 import com.shenhan.app.data.CinemaChatHistoryStore
+import com.shenhan.app.data.SmartNotificationManager
 import com.shenhan.app.model.QuestZone
 import com.shenhan.app.model.ScriptMode
 import com.shenhan.app.ui.theme.FrostedSlateLight
@@ -814,11 +815,11 @@ private fun GeminiInteractiveChatGame(
                 chatHistory.addAll(
                     savedSession.messages.map {
                         CinemaChatBubble(
-                            id = it.id,
+                            id = (it.id ?: ""),
                             isUser = it.isUser,
-                            zhText = it.zhText,
-                            pinyin = it.pinyin,
-                            thText = it.thText,
+                            zhText = (it.zhText ?: ""),
+                            pinyin = (it.pinyin ?: ""),
+                            thText = (it.thText ?: ""),
                             coachFeedback = it.coachFeedback,
                             accuracyPct = it.accuracyPct,
                             animateTyping = false
@@ -904,6 +905,7 @@ private fun GeminiInteractiveChatGame(
                 thText = "ส่งให้ผู้ช่วยเฉินตรวจแล้ว"
             )
         )
+        SmartNotificationManager.markStudiedToday(context)
         persistCurrentChat()
         userInput = ""
         isGeminiTyping = true
@@ -957,6 +959,7 @@ private fun GeminiInteractiveChatGame(
                     CinemaGameBridge.completeQuestNode(activeNode.id, 3)
                     onCompleteNode(activeNode.id, 3)
                     onReward(activeNode.xpReward, "ผ่านด่านผู้ช่วยเฉิน 3 ดาว!")
+                    SmartNotificationManager.notifyProgressMilestone(context, "🏆 ผ่านด่าน ${activeNode.titleTh} สำเร็จ!", "ผู้ช่วยเฉินมอบคะแนน +${activeNode.xpReward} XP ลุยด่านถัดไปกันเลยครับ")
                 }
             }.onFailure { err ->
                 val errMsg = err.message ?: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
