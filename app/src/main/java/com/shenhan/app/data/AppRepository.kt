@@ -71,13 +71,15 @@ class AppRepository(private val context: Context) {
     private fun buildZeroQuestZones(): List<QuestZone> {
         val isProNow = ProEntitlementManager.isPro(context)
         val base = SampleData.questZones.mapIndexed { zIdx, zone ->
-            val zoneFreeOrPro = isProNow || (zone.id == "zone_favorite") || (zIdx < 3)
+            val isPaidHsk4to6 = zone.hskLevel in setOf(HskLevel.HSK4, HskLevel.HSK5, HskLevel.HSK6)
+            val zoneAccessible = isProNow || !isPaidHsk4to6
             zone.copy(
-                isUnlocked = zoneFreeOrPro,
+                isUnlocked = zoneAccessible,
                 nodes = zone.nodes.mapIndexed { nIdx, node ->
+                    val nodePaid = isPaidHsk4to6 || (node.hskLevel in setOf(HskLevel.HSK4, HskLevel.HSK5, HskLevel.HSK6))
                     node.copy(
                         starsEarned = 0,
-                        isUnlocked = zoneFreeOrPro,
+                        isUnlocked = isProNow || !nodePaid,
                         isCurrent = (zIdx == 0 && nIdx == 0)
                     )
                 }
@@ -313,6 +315,11 @@ class AppRepository(private val context: Context) {
 
     fun setScriptMode(mode: ScriptMode) {
         _scriptMode.value = mode
+    }
+
+    fun unlockProFromUi() {
+        val proTier = SubscriptionTier.values().firstOrNull { it.isPro } ?: SubscriptionTier.FREE
+        setSubscriptionTier(proTier)
     }
 
     fun setSubscriptionTier(tier: SubscriptionTier) {

@@ -1,4 +1,5 @@
 package com.shenhan.app.ui.screens
+import com.shenhan.app.data.ProEntitlementManager
 
 import com.shenhan.app.data.CinemaGameBridge
 
@@ -159,7 +160,57 @@ fun QuestMapScreen(
     var selectedAnswerIndex by remember { mutableStateOf<Int?>(null) }
     var isAnswerSubmitted by remember { mutableStateOf(false) }
 
-    val currentZone = questZones.getOrNull(selectedZoneIndex) ?: questZones.firstOrNull() ?: return
+    var isProMember by remember { mutableStateOf(ProEntitlementManager.isPro(context)) }
+    var lockedHskTitle by remember { mutableStateOf<String?>(null) }
+    val rawZone = questZones.getOrNull(selectedZoneIndex) ?: questZones.firstOrNull() ?: return
+    val isZoneHsk4to6 = rawZone.hskLevel in setOf(HskLevel.HSK4, HskLevel.HSK5, HskLevel.HSK6)
+    val currentZone = if (!isProMember && isZoneHsk4to6) {
+        rawZone.copy(
+            isUnlocked = false,
+            nodes = rawZone.nodes.map { it.copy(isUnlocked = false) }
+        )
+    } else {
+        rawZone.copy(
+            isUnlocked = true,
+            nodes = rawZone.nodes.map { it.copy(isUnlocked = true) }
+        )
+    }
+
+    if (lockedHskTitle != null) {
+        AlertDialog(
+            onDismissRequest = { lockedHskTitle = null },
+            title = {
+                Text(
+                    text = "👑 ปลดล็อกเนื้อหาระดับสูง (${lockedHskTitle})",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "ระดับ HSK 1–3 เปิดให้เรียนฟรีครบทุกด่านแล้วครับ!\n\n" +
+                        "สำหรับเนื้อหาระดับสูง HSK 4, HSK 5 และ HSK 6 สงวนสิทธิ์เฉพาะสมาชิก ShenHan Pro เพื่อรับสิทธิ์:\n" +
+                        "• 🗺️ ปลดล็อกด่านระดับสูง HSK 4–6 ครบทุกบท\n" +
+                        "• 💬 คุยกับผู้ช่วยเฉินไม่จำกัด 24 ชม.\n" +
+                        "• 🧪 สร้างชุดคำศัพท์ AI ในห้องแล็บไม่จำกัด"
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    ProEntitlementManager.setPro(context, true)
+                    isProMember = true
+                    lockedHskTitle = null
+                    Toast.makeText(context, "👑 ปลดล็อก ShenHan Pro และด่าน HSK 4–6 เรียบร้อย!", Toast.LENGTH_LONG).show()
+                }) {
+                    Text("ปลดล็อก ShenHan Pro")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { lockedHskTitle = null }) {
+                    Text("กลับไปเรียน HSK 1–3")
+                }
+            }
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -595,7 +646,7 @@ fun QuestMapScreen(
                 scriptMode = scriptMode,
                 onNodeClick = {
                     if (!node.isUnlocked && node.starsEarned == 0) {
-                        Toast.makeText(context, "กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
+                        lockedHskTitle = currentZone.hskLevel.name
                     } else if (node.dialogueTurns.isNotEmpty()) {
                         activeDialogueNode = node
                         dialogueStepIndex = 0
@@ -624,7 +675,7 @@ fun QuestMapScreen(
                 },
                 onOpenInCinema = {
                     if (!node.isUnlocked && node.starsEarned == 0) {
-                        Toast.makeText(context, "กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
+                        lockedHskTitle = currentZone.hskLevel.name
                     } else {
                         CinemaGameBridge.openNodeInCinema(node.id)
                         onNavigateToCinema()
