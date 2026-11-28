@@ -66,7 +66,7 @@ def main():
         with open(manifest_path, "r", encoding="utf-8") as f:
             manifest = json.load(f)
     manifest["version"] = args.version
-    manifest["totalEntries"] = len(vocab)
+    manifest["totalEntries"] = len(vocab); manifest["vocabUrl"] = "https://raw.githubusercontent.com/shenwangent-ui/CNML/main/remote_vocab/hsk3_vocab.json"
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 

@@ -2,5 +2,5 @@
   "version": 2,
   "updatedAt": "2026-11-28",
   "vocabUrl": "https://raw.githubusercontent.com/shenwangproducts/shenhan-vocab/main/hsk3_vocab.json",
-  "totalEntries": 737
+  "vocabUrl": "https://raw.githubusercontent.com/shenwangent-ui/CNML/main/remote_vocab/hsk3_vocab.json", "totalEntries": 737
 }
