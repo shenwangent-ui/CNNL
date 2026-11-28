@@ -788,12 +788,12 @@ private fun GeminiInteractiveChatGame(
             nodeId = activeNode.id,
             messages = chatHistory.map {
                 StoredChatMessage(
-                    id = it.id,
+                    id = it.id.orEmpty(),
                     isUser = it.isUser,
-                    zhText = it.zhText,
-                    pinyin = it.pinyin,
-                    thText = it.thText,
-                    coachFeedback = it.coachFeedback,
+                    zhText = it.zhText.orEmpty(),
+                    pinyin = it.pinyin.orEmpty(),
+                    thText = it.thText.orEmpty(),
+                    coachFeedback = it.coachFeedback.orEmpty(),
                     accuracyPct = it.accuracyPct
                 )
             },
