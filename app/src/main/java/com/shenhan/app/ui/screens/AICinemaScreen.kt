@@ -1,4 +1,6 @@
 package com.shenhan.app.ui.screens
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import com.shenhan.app.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -346,6 +348,58 @@ fun AICinemaScreen(
     var hearts by remember { mutableIntStateOf(5) }
     var comboCount by remember { mutableIntStateOf(0) }
     var chestCharge by remember { mutableIntStateOf(1) }
+    var isProMember by remember { mutableStateOf(ProEntitlementManager.isPro(context)) }
+    var remainingFreeTurns by remember { mutableStateOf(ProEntitlementManager.getRemainingFreeTurns(context)) }
+    var showProUpgradeDialog by remember { mutableStateOf(false) }
+
+    if (showProUpgradeDialog) {
+        AlertDialog(
+            onDismissRequest = { showProUpgradeDialog = false },
+            title = {
+                Text(
+                    text = if (isProMember) "👑 สถานะสมาชิก ShenHan Pro" else "👑 อัปเกรดเป็น ShenHan Pro",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (isProMember) {
+                        "คุณกำลังใช้งานแพ็กเกจ ShenHan Pro เต็มรูปแบบ:\n\n" +
+                        "✅ คุยกับผู้ช่วยเฉินไม่จำกัด 24 ชม.\n" +
+                        "✅ สร้างชุดคำศัพท์ AI ในห้องแล็บไม่จำกัด\n" +
+                        "✅ ปลดล็อกแผนที่เควสต์ครบทุกด่าน HSK 1–6\n" +
+                        "✅ บันทึกประวัติแชทและซิงก์คลาวด์อัตโนมัติ"
+                    } else {
+                        "โควตาคุยฟรีวันนี้เหลือ $remainingFreeTurns/${ProEntitlementManager.FREE_DAILY_CHAT_LIMIT} ครั้ง\n\n" +
+                        "ปลดล็อก ShenHan Pro เพื่อรับสิทธิ์:\n" +
+                        "• 💬 คุยกับผู้ช่วยเฉินไม่จำกัด + ถามนอกกรอบได้ทุกเรื่อง\n" +
+                        "• 🧪 สร้างชุดคำศัพท์ AI จากข้อความ/ลิงก์ไม่จำกัด\n" +
+                        "• 🗺️ ปลดล็อกแผนที่เควสต์ HSK 1–6 และบทเฉพาะทางครบทุกด่าน\n" +
+                        "• ⚡ โหมดทวนซ้ำอัจฉริยะและปรับความเร็วเสียง"
+                    }
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (!isProMember) {
+                        ProEntitlementManager.setPro(context, true)
+                        isProMember = true
+                        Toast.makeText(context, "👑 เปิดใช้งาน ShenHan Pro เรียบร้อย! คุยไม่จำกัดได้เลยครับ", Toast.LENGTH_LONG).show()
+                    }
+                    showProUpgradeDialog = false
+                }) {
+                    Text(if (isProMember) "ตกลง" else "ปลดล็อก ShenHan Pro")
+                }
+            },
+            dismissButton = {
+                if (!isProMember) {
+                    TextButton(onClick = { showProUpgradeDialog = false }) {
+                        Text("ใช้แบบฟรีต่อ")
+                    }
+                }
+            }
+        )
+    }
 
     // สถานะโมเดล AI ที่เชื่อมต่ออัตโนมัติ (ผู้ใช้ไม่ต้องกรอก API Key)
     var activeModelBadge by remember { mutableStateOf("ผู้ช่วยเฉิน") }
@@ -639,6 +693,10 @@ fun AICinemaScreen(
                 onSimulateUserSpeech = onSimulateUserSpeech,
                 onReward = ::rewardGameSuccess,
                 onCompleteNode = onCompleteNode,
+                isProMember = isProMember,
+                remainingFreeTurns = remainingFreeTurns,
+                onRemainingTurnsChanged = { remainingFreeTurns = it },
+                onOpenProDialog = { showProUpgradeDialog = true },
                 modifier = Modifier.weight(1f)
             )
             GameArenaMode.CARD_MATCH -> CardMatchBattleGame(
@@ -691,6 +749,10 @@ private fun GeminiInteractiveChatGame(
     onSimulateUserSpeech: (String) -> Unit,
     onReward: (Int, String) -> Unit,
     onCompleteNode: (String, Int) -> Unit,
+    isProMember: Boolean,
+    remainingFreeTurns: Int,
+    onRemainingTurnsChanged: (Int) -> Unit,
+    onOpenProDialog: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -923,7 +985,7 @@ private fun GeminiInteractiveChatGame(
             res.onSuccess { turn ->
                 if (!isProMember) {
                     ProEntitlementManager.recordChatTurn(context)
-                    remainingFreeTurns = ProEntitlementManager.getRemainingFreeTurns(context)
+                    onRemainingTurnsChanged(ProEntitlementManager.getRemainingFreeTurns(context))
                 }
                 onModelResolved(turn.usedModel)
                 val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
