@@ -48,7 +48,8 @@ object GeminiTutorService {
         prefs.edit().putString(KEY_API, apiKey.trim()).apply()
     }
 
-    fun hasApiKey(context: Context): Boolean = getApiKey(context).isNotBlank()
+    // เชื่อมต่อผ่าน Supabase Edge Function (gemini-tutor) เป็นค่าเริ่มต้น ผู้ใช้ไม่ต้องกรอกคีย์เอง
+    fun hasApiKey(context: Context): Boolean = true
 
     suspend fun generateTurn(
         context: Context,
@@ -57,11 +58,6 @@ object GeminiTutorService {
         historyPairs: List<Pair<Boolean, String>>,
         latestUserMessage: String?
     ): Result<GeminiTurnResult> = withContext(Dispatchers.IO) {
-        val apiKey = getApiKey(context)
-        if (apiKey.isBlank()) {
-            return@withContext Result.failure(IllegalStateException("NO_API_KEY"))
-        }
-
         val scriptLabel = if (scriptMode == ScriptMode.SIMPLIFIED) {
             "Simplified Chinese (简体中文)"
         } else {
@@ -118,7 +114,6 @@ object GeminiTutorService {
             latestUserMessage
         }
 
-        // จัดเรียงลำดับ role ให้เริ่มด้วย "user" และสลับ "user" / "model" ตามข้อกำหนดของ Gemini REST API
         val rawTurns = mutableListOf<Pair<String, String>>()
         for ((isUser, text) in historyPairs.takeLast(10)) {
             val clean = text.trim()
@@ -152,89 +147,128 @@ object GeminiTutorService {
             )
         }
 
-        val requestBody = JSONObject().apply {
+        val geminiPayloadObj = JSONObject().apply {
             put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemPrompt))))
             put("contents", contentsArray)
             put("generationConfig", JSONObject().apply {
                 put("temperature", 0.85)
                 put("responseMimeType", "application/json")
             })
-        }.toString()
+        }
 
-        var lastError: Exception = Exception("Gemini API request failed")
+        fun parseGeminiResponse(rawResponse: String, modelUsed: String): GeminiTurnResult {
+            val root = JSONObject(rawResponse)
+            val rawText = root.getJSONArray("candidates")
+                .getJSONObject(0)
+                .getJSONObject("content")
+                .getJSONArray("parts")
+                .getJSONObject(0)
+                .getString("text")
+                .trim()
 
-        for (modelName in MODEL_CANDIDATES) {
-            try {
-                val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey"
-                val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                    connectTimeout = 15000
-                    readTimeout = 25000
-                    doOutput = true
-                }
+            val jsonStart = rawText.indexOf('{')
+            val jsonEnd = rawText.lastIndexOf('}')
+            val cleanJson = if (jsonStart != -1 && jsonEnd > jsonStart) {
+                rawText.substring(jsonStart, jsonEnd + 1)
+            } else {
+                rawText
+            }
 
-                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { writer ->
-                    writer.write(requestBody)
-                }
-
-                val code = conn.responseCode
-                val rawResponse = if (code in 200..299) {
-                    conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-                } else {
-                    val errText = conn.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-                    throw Exception("HTTP $code ($modelName): $errText")
-                }
-
-                val root = JSONObject(rawResponse)
-                val rawText = root.getJSONArray("candidates")
-                    .getJSONObject(0)
-                    .getJSONObject("content")
-                    .getJSONArray("parts")
-                    .getJSONObject(0)
-                    .getString("text")
-                    .trim()
-
-                val jsonStart = rawText.indexOf('{')
-                val jsonEnd = rawText.lastIndexOf('}')
-                val cleanJson = if (jsonStart != -1 && jsonEnd > jsonStart) {
-                    rawText.substring(jsonStart, jsonEnd + 1)
-                } else {
-                    rawText
-                }
-
-                val parsed = JSONObject(cleanJson)
-                val sugArr = parsed.optJSONArray("suggestions") ?: JSONArray()
-                val suggestions = mutableListOf<GeminiSuggestion>()
-                for (i in 0 until sugArr.length()) {
-                    val item = sugArr.getJSONObject(i)
-                    val zhItem = item.optString("zh", "").trim()
-                    if (zhItem.isNotEmpty()) {
-                        suggestions.add(
-                            GeminiSuggestion(
-                                zh = zhItem,
-                                pinyin = item.optString("pinyin", ""),
-                                th = item.optString("th", ""),
-                                tag = item.optString("tag", "💬 แนะนำ")
-                            )
+            val parsed = JSONObject(cleanJson)
+            val sugArr = parsed.optJSONArray("suggestions") ?: JSONArray()
+            val suggestions = mutableListOf<GeminiSuggestion>()
+            for (i in 0 until sugArr.length()) {
+                val item = sugArr.getJSONObject(i)
+                val zhItem = item.optString("zh", "").trim()
+                if (zhItem.isNotEmpty()) {
+                    suggestions.add(
+                        GeminiSuggestion(
+                            zh = zhItem,
+                            pinyin = item.optString("pinyin", ""),
+                            th = item.optString("th", ""),
+                            tag = item.optString("tag", "💬 แนะนำ")
                         )
-                    }
-                }
-
-                return@withContext Result.success(
-                    GeminiTurnResult(
-                        replyZh = parsed.optString("reply_zh", "你好！有什么我可以帮你的吗？"),
-                        replyPinyin = parsed.optString("reply_pinyin", "Nǐ hǎo! Yǒu shénme wǒ kěyǐ bāng nǐ de ma?"),
-                        replyTh = parsed.optString("reply_th", "สวัสดี! มีอะไรให้ฉันช่วยไหม?"),
-                        coachFeedbackTh = parsed.optString("coach_feedback_th", "✨ Gemini 6-in-1 พร้อมตอบทุกคำถามทั้งในและนอกบทเรียน"),
-                        accuracyPct = parsed.optInt("accuracy_pct", 92).coerceIn(50, 100),
-                        stepPassed = parsed.optBoolean("step_passed", true),
-                        suggestions = suggestions.take(4),
-                        usedModel = modelName
                     )
-                )
-            } catch (e: Exception) {
-                lastError = e
+                }
+            }
+
+            return GeminiTurnResult(
+                replyZh = parsed.optString("reply_zh", "你好！有什么我可以帮你的吗？"),
+                replyPinyin = parsed.optString("reply_pinyin", "Nǐ hǎo! Yǒu shénme wǒ kěyǐ bāng nǐ de ma?"),
+                replyTh = parsed.optString("reply_th", "สวัสดี! มีอะไรให้ฉันช่วยไหม?"),
+                coachFeedbackTh = parsed.optString("coach_feedback_th", "✨ Gemini 6-in-1 พร้อมตอบทุกคำถามทั้งในและนอกบทเรียน"),
+                accuracyPct = parsed.optInt("accuracy_pct", 92).coerceIn(50, 100),
+                stepPassed = parsed.optBoolean("step_passed", true),
+                suggestions = suggestions.take(4),
+                usedModel = modelUsed
+            )
+        }
+
+        var lastError: Exception = Exception("Supabase Edge Function request failed")
+
+        // 1. ยิงผ่าน Supabase Edge Function (ใช้ GEMINI_API_KEY จาก Supabase Secrets อัตโนมัติ)
+        try {
+            val edgeUrl = "${SupabaseSyncManager.SUPABASE_URL}/functions/v1/gemini-tutor"
+            val edgeBody = JSONObject().put("payload", geminiPayloadObj).toString()
+            val conn = (URL(edgeUrl).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                setRequestProperty("apikey", SupabaseSyncManager.SUPABASE_ANON_KEY)
+                setRequestProperty("Authorization", "Bearer ${SupabaseSyncManager.SUPABASE_ANON_KEY}")
+                connectTimeout = 15000
+                readTimeout = 30000
+                doOutput = true
+            }
+
+            OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { writer ->
+                writer.write(edgeBody)
+            }
+
+            val code = conn.responseCode
+            val rawResponse = if (code in 200..299) {
+                conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            } else {
+                val errText = conn.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                throw Exception("Supabase Edge HTTP $code: $errText")
+            }
+
+            val usedModel = conn.getHeaderField("X-Used-Model")?.takeIf { it.isNotBlank() } ?: "gemini-2.5-flash"
+            return@withContext Result.success(parseGeminiResponse(rawResponse, usedModel))
+        } catch (e: Exception) {
+            lastError = e
+        }
+
+        // 2. ระบบสำรอง: หากผู้ใช้ตั้งค่าคีย์ส่วนตัวในเครื่องไว้ ให้ยิงตรงเข้า Google Gemini API
+        val localKey = getApiKey(context)
+        if (localKey.isNotBlank()) {
+            val directBody = geminiPayloadObj.toString()
+            for (modelName in MODEL_CANDIDATES) {
+                try {
+                    val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$localKey"
+                    val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                        connectTimeout = 15000
+                        readTimeout = 25000
+                        doOutput = true
+                    }
+
+                    OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { writer ->
+                        writer.write(directBody)
+                    }
+
+                    val code = conn.responseCode
+                    val rawResponse = if (code in 200..299) {
+                        conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    } else {
+                        val errText = conn.errorStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                        throw Exception("HTTP $code ($modelName): $errText")
+                    }
+
+                    return@withContext Result.success(parseGeminiResponse(rawResponse, modelName))
+                } catch (e: Exception) {
+                    lastError = e
+                }
             }
         }
 

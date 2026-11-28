@@ -898,47 +898,16 @@ private fun GeminiInteractiveChatGame(
                     onCompleteNode(activeNode.id, 3)
                     onReward(activeNode.xpReward, "ผ่านด่าน Gemini 3 ดาว!")
                 }
-            }.onFailure {
+            }.onFailure { err ->
+                val errMsg = err.message ?: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
                 val uIdx = chatHistory.indexOfFirst { it.id == userBubbleId }
                 if (uIdx != -1) {
                     chatHistory[uIdx] = chatHistory[uIdx].copy(
-                        pinyin = "ประเมินบทสนทนาในด่าน",
-                        thText = "ตอบโต้ตรงตามสถานการณ์ ${activeNode.titleTh}",
-                        coachFeedback = "เยี่ยมมาก! สื่อสารได้ดีและเป็นธรรมชาติ",
-                        accuracyPct = 90
+                        pinyin = "เชื่อมต่อไม่สำเร็จ",
+                        thText = "ตรวจสอบอินเทอร์เน็ตหรือ Supabase Secrets",
+                        coachFeedback = "⚠️ ระบบแจ้งเตือน: ${errMsg.take(140)}",
+                        accuracyPct = 0
                     )
-                }
-                val nextScriptIdx = (passedTurns + 1).coerceAtMost((activeNode.dialogueTurns.size - 1).coerceAtLeast(0))
-                val nextTurn = activeNode.dialogueTurns.getOrNull(nextScriptIdx)
-                val fallbackReply = if (nextTurn != null) {
-                    if (scriptMode == ScriptMode.SIMPLIFIED) nextTurn.hans else nextTurn.hant
-                } else if (scriptMode == ScriptMode.SIMPLIFIED) {
-                    "很好！继续用中文跟我练习吧。"
-                } else {
-                    "很好！繼續用中文跟我練習吧。"
-                }
-                val fallbackPinyin = nextTurn?.pinyin ?: "Hěn hǎo! Jìxù yòng Zhōngwén gēn wǒ liànxí ba."
-                val fallbackTh = nextTurn?.th ?: "เยี่ยมมาก! ฝึกสนทนาภาษาจีนกับฉันต่อได้เลย"
-
-                chatHistory.add(
-                    CinemaChatBubble(
-                        id = "fb_${System.currentTimeMillis()}",
-                        isUser = false,
-                        zhText = fallbackReply,
-                        pinyin = fallbackPinyin,
-                        thText = fallbackTh,
-                        animateTyping = true
-                    )
-                )
-                onSpeak(fallbackReply)
-                loadFallbackSuggestions(passedTurns + 1)
-                onReward(20, "ตอบโต้สำเร็จ")
-                passedTurns += 1
-                if (passedTurns >= 3 && !isLessonCompleted) {
-                    isLessonCompleted = true
-                    CinemaGameBridge.completeQuestNode(activeNode.id, 3)
-                    onCompleteNode(activeNode.id, 3)
-                    onReward(activeNode.xpReward, "ผ่านด่านเรียบร้อย!")
                 }
             }
         }
