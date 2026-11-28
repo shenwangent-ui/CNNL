@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.VolumeUp
@@ -63,6 +64,7 @@ import com.shenhan.app.ui.theme.FrostedMatchGreen
 import com.shenhan.app.ui.theme.FrostedMatchGreenContainer
 import com.shenhan.app.ui.theme.FrostedMatchGreenDark
 import com.shenhan.app.ui.theme.FrostedPitchNative
+import com.shenhan.app.ui.theme.FrostedPitchTarget
 import com.shenhan.app.ui.theme.FrostedPitchUser
 import com.shenhan.app.ui.theme.FrostedPurpleContainer
 import com.shenhan.app.ui.theme.FrostedPurpleOnContainer
@@ -540,7 +542,12 @@ fun TonePitchVisualizer(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.Top
                 ) {
-                    Text(text = "💡", fontSize = 13.sp)
+                    Icon(
+                        imageVector = Icons.Default.Lightbulb,
+                        contentDescription = null,
+                        tint = FrostedPitchTarget,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "เทคนิค: ${syllable.commonMistakeTh}",

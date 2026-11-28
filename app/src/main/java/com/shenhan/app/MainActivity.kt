@@ -1,25 +1,28 @@
 package com.shenhan.app
 
+import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.recaptcha.RecaptchaAppCheckProviderFactory
 import com.shenhan.app.auth.RealAuthManager
-
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
@@ -39,6 +42,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shenhan.app.audio.AudioEngine
 import com.shenhan.app.data.AppRepository
+import com.shenhan.app.data.CinemaGameBridge
 import com.shenhan.app.model.AuthProvider
 import com.shenhan.app.model.MandarinTone
 import com.shenhan.app.model.PlacementTestResult
@@ -60,7 +65,7 @@ import com.shenhan.app.ui.components.FrostedCanvasContainer
 import com.shenhan.app.ui.components.HumanGatesModal
 import com.shenhan.app.ui.components.ShenHanTopAppBar
 import com.shenhan.app.ui.components.SubscriptionDialog
-import com.shenhan.app.ui.screens.AiCinemaScreen
+import com.shenhan.app.ui.screens.AICinemaScreen
 import com.shenhan.app.ui.screens.AuthScreen
 import com.shenhan.app.ui.screens.PlacementTestScreen
 import com.shenhan.app.ui.screens.ProfileScreen
@@ -88,6 +93,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         RealAuthManager.ensureFirebaseInitialized(this)
+        configureAppCheck(this, intent)
         intent?.data?.let { RealAuthManager.pendingDeepLinkUri = it }
         enableEdgeToEdge()
 
@@ -147,15 +153,25 @@ fun ShenHanMainApp(
     val readinessScore by repository.readinessScore.collectAsState()
     val questZones by repository.questZones.collectAsState()
     val vocabList by repository.vocabList.collectAsState()
+    val customPacks by repository.customPacks.collectAsState()
     val toneSyllables by repository.toneSyllables.collectAsState()
     val audioSpeed by repository.audioSpeed.collectAsState()
 
     // Audio Engine States
     val isPitchRecording by audioEngine.isRecording.collectAsState()
+    val isTtsSpeaking by audioEngine.isSpeaking.collectAsState()
     val liveFrequencyHz by audioEngine.currentFrequencyHz.collectAsState()
     val liveSpectrum by audioEngine.audioSpectrum.collectAsState()
     val recordedPitchPoints by audioEngine.recordedPitchPoints.collectAsState()
     val lastPitchResult by audioEngine.lastAnalysisResult.collectAsState()
+
+    LaunchedEffect(questZones) {
+        CinemaGameBridge.updateQuestZones(questZones)
+    }
+
+    LaunchedEffect(customPacks) {
+        CinemaGameBridge.updateCustomPacks(customPacks)
+    }
 
     // App Flow & Dialog States
     var currentFlow by remember { mutableStateOf(MainAppFlow.MAIN_NAV) }
@@ -347,19 +363,29 @@ fun ShenHanMainApp(
                                     audioEngine.stopPitchRecording()
                                 },
                                 onSrsRateWord = { wordId, ease -> repository.updateVocabSrs(wordId, ease) },
-                                onToggleBookmark = { wordId -> repository.toggleBookmarkVocab(wordId) }
+                                onToggleBookmark = { wordId -> repository.toggleBookmarkVocab(wordId) },
+                                customPacks = customPacks,
+                                onImportVocabFile = { uri, name -> repository.importVocabPackFromUri(uri, name) },
+                                onImportVocabText = { name, raw -> repository.importVocabPackFromText(name, raw) },
+                                onDeleteCustomPack = { packId -> repository.deleteCustomVocabPack(packId) },
+                                onLaunchCinemaWithPack = { packId, modeIdx ->
+                                    CinemaGameBridge.openCustomPackInCinema(packId, modeIdx)
+                                    selectedNavIndex = 2
+                                }
                             )
-                            2 -> AiCinemaScreen(
+                            2 -> AICinemaScreen(
                                 scriptMode = scriptMode,
-                                audioSpeed = audioSpeed,
+                                isTtsSpeaking = isTtsSpeaking,
                                 isAudioRecording = isPitchRecording,
+                                audioSpeed = audioSpeed,
                                 onSpeak = { text -> audioEngine.speak(text, audioSpeed) },
                                 onChangeAudioSpeed = { speed ->
                                     repository.setAudioSpeed(speed)
                                     audioEngine.setSpeechRate(speed)
                                 },
                                 onSimulateUserSpeech = { text -> audioEngine.speak(text, audioSpeed) },
-                                onAddXp = { amount -> repository.addXp(amount) }
+                                onAddXp = { amount -> repository.addXp(amount) },
+                                onCompleteNode = { nodeId, stars -> repository.completeQuestNode(nodeId, stars) }
                             )
                             3 -> ProfileScreen(
                                 currentUser = currentUser,
@@ -406,5 +432,48 @@ fun ShenHanMainApp(
         }
     }
 }
+
+private const val APP_CHECK_TAG = "AppCheckInit"
+private const val DEBUG_TOKEN_EXTRA = "FIREBASE_APPCHECK_DEBUG_TOKEN"
+private const val DEBUG_STORE_PREFIX = "com.google.firebase.appcheck.debug.store."
+private const val DEBUG_SECRET_KEY = "com.google.firebase.appcheck.debug.DEBUG_SECRET"
+private const val RECAPTCHA_SITE_KEY_RES = "recaptcha_site_key"
+
+fun configureAppCheck(context: Context, intent: Intent?) {
+    try {
+        if (FirebaseApp.getApps(context).isEmpty()) {
+            FirebaseApp.initializeApp(context)
+        }
+        if (BuildConfig.DEBUG) {
+            val debugToken = intent?.getStringExtra(DEBUG_TOKEN_EXTRA)
+            if (!debugToken.isNullOrEmpty()) {
+                val persistenceKey = FirebaseApp.getInstance().persistenceKey
+                val prefs = context.getSharedPreferences(
+                    "$DEBUG_STORE_PREFIX$persistenceKey",
+                    Context.MODE_PRIVATE
+                )
+                prefs.edit()
+                    .putString(DEBUG_SECRET_KEY, debugToken)
+                    .commit()
+            }
+            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance()
+            )
+        } else {
+            val resId = context.resources.getIdentifier(RECAPTCHA_SITE_KEY_RES, "string", context.packageName)
+            if (resId != 0) {
+                val siteKey = context.getString(resId)
+                if (siteKey.isNotBlank()) {
+                    FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                        RecaptchaAppCheckProviderFactory.getInstance(siteKey)
+                    )
+                }
+            }
+        }
+    } catch (e: Exception) {
+        Log.e(APP_CHECK_TAG, "Failed to initialize Firebase App Check", e)
+    }
+}
+
 
 

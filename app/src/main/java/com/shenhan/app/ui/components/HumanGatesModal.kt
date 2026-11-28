@@ -22,8 +22,10 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -200,11 +202,20 @@ fun HumanGatesModal(
                                             color = FrostedSlateMuted
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "📦 ผลงานส่งมอบ: ${gate.deliverablesTh}",
-                                            fontSize = 11.sp,
-                                            color = FrostedSlateDark
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Inventory2,
+                                                contentDescription = null,
+                                                tint = FrostedPurplePrimary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "ผลงานส่งมอบ: ${gate.deliverablesTh}",
+                                                fontSize = 11.sp,
+                                                color = FrostedSlateDark
+                                            )
+                                        }
                                         Spacer(modifier = Modifier.height(6.dp))
                                         Surface(
                                             shape = RoundedCornerShape(10.dp),
@@ -212,13 +223,24 @@ fun HumanGatesModal(
                                             border = BorderStroke(1.dp, FrostedAmberDark.copy(alpha = 0.3f)),
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text(
-                                                text = "🧑✈️ จุดคุมมนุษย์เช็กทำ: ${gate.humanCheckActionTh}",
+                                            Row(
                                                 modifier = Modifier.padding(8.dp),
-                                                fontSize = 11.sp,
-                                                color = FrostedAmberDark,
-                                                fontWeight = FontWeight.Medium
-                                            )
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.VerifiedUser,
+                                                    contentDescription = null,
+                                                    tint = FrostedAmberDark,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "จุดคุมมนุษย์เช็กทำ: ${gate.humanCheckActionTh}",
+                                                    fontSize = 11.sp,
+                                                    color = FrostedAmberDark,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
                                         }
                                     }
                                 }

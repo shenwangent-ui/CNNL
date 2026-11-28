@@ -26,13 +26,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.CardMembership
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -144,7 +152,12 @@ fun ProfileScreen(
                             .border(2.dp, FrostedPurplePrimary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = currentUser?.avatarEmoji ?: "🐼", fontSize = 38.sp)
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User Avatar",
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -235,7 +248,12 @@ fun ProfileScreen(
                             .background(FrostedPurpleContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🎯", fontSize = 26.sp)
+                        Icon(
+                            imageVector = Icons.Default.TrackChanges,
+                            contentDescription = null,
+                            tint = FrostedPurplePrimary,
+                            modifier = Modifier.size(26.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -427,7 +445,31 @@ fun ProfileScreen(
                                     .padding(14.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = badge.iconEmoji, fontSize = 28.sp)
+                                val badgeVector = when (badge.id) {
+                                    "b1_tone_master" -> Icons.Default.GraphicEq
+                                    "b2_streak_7" -> Icons.Default.LocalFireDepartment
+                                    "b3_guangzhou_pro" -> Icons.Default.ShoppingBag
+                                    "b4_srs_conqueror" -> Icons.Default.Psychology
+                                    "b5_handwriting_guru" -> Icons.Default.Edit
+                                    else -> Icons.Default.EmojiEvents
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (badge.isUnlocked) FrostedAmberDark.copy(alpha = 0.16f)
+                                            else FrostedPurpleContainer
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = badgeVector,
+                                        contentDescription = badge.titleTh,
+                                        tint = if (badge.isUnlocked) FrostedAmberDark else FrostedPurplePrimary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = badge.titleTh,
@@ -620,7 +662,12 @@ fun ProfileScreen(
                                     AuthProvider.GOOGLE -> GoogleBrandLogo(size = 24.dp)
                                     AuthProvider.WECHAT -> WeChatBrandLogo(size = 24.dp)
                                     AuthProvider.LINE -> LineBrandLogo(size = 24.dp)
-                                    else -> Text(text = provider.iconEmoji, fontSize = 22.sp)
+                                    else -> Icon(
+                                        imageVector = Icons.Default.AccountCircle,
+                                        contentDescription = provider.displayName,
+                                        tint = FrostedPurplePrimary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {

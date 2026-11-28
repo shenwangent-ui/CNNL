@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoFixHigh
@@ -34,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,13 +84,21 @@ fun HandwritingCanvas(
     scriptMode: ScriptMode,
     modifier: Modifier = Modifier
 ) {
-    val strokes = remember { mutableStateListOf<DrawStroke>() }
-    var currentStrokePoints by remember { mutableStateOf<List<Offset>>(emptyList()) }
-    var showReferenceGuide by remember { mutableStateOf(true) }
-    var evaluationResult by remember { mutableStateOf<String?>(null) }
-    var score by remember { mutableStateOf(0) }
+    val wordText = if (scriptMode == ScriptMode.SIMPLIFIED) vocabWord.simplified else vocabWord.traditional
+    val charList = remember(wordText) {
+        wordText.filter { !it.isWhitespace() }.map { it.toString() }.ifEmpty { listOf("汉") }
+    }
+    var selectedCharIndex by remember(vocabWord.id, scriptMode) { mutableIntStateOf(0) }
+    val safeCharIndex = selectedCharIndex.coerceIn(0, charList.lastIndex)
+    val characterToDraw = charList[safeCharIndex]
 
-    val characterToDraw = if (scriptMode == ScriptMode.SIMPLIFIED) vocabWord.simplified.take(1) else vocabWord.traditional.take(1)
+    val strokes = remember(vocabWord.id, safeCharIndex, scriptMode) { mutableStateListOf<DrawStroke>() }
+    var currentStrokePoints by remember(vocabWord.id, safeCharIndex, scriptMode) {
+        mutableStateOf<List<Offset>>(emptyList())
+    }
+    var showReferenceGuide by remember { mutableStateOf(true) }
+    var evaluationResult by remember(vocabWord.id, safeCharIndex, scriptMode) { mutableStateOf<String?>(null) }
+    var score by remember(vocabWord.id, safeCharIndex, scriptMode) { mutableIntStateOf(0) }
 
     Card(
         modifier = modifier
@@ -109,15 +121,16 @@ fun HandwritingCanvas(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "สตูดิโอลำดับขีด & คัดอักษรจีน (米字格)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = FrostedSlateDark
                     )
+                    val strokeText = if (vocabWord.strokeCount > 0) "${vocabWord.strokeCount} ขีด" else "ฝึกคัดอักษร"
                     Text(
-                        text = "${vocabWord.pinyin} • ${vocabWord.meaningTh} (${vocabWord.strokeCount} ขีด)",
+                        text = "${vocabWord.pinyin} • ${vocabWord.meaningTh} ($strokeText)",
                         style = MaterialTheme.typography.bodySmall,
                         color = FrostedSlateMuted
                     )
@@ -140,6 +153,37 @@ fun HandwritingCanvas(
                             fontWeight = FontWeight.Bold,
                             color = FrostedPurplePrimary
                         )
+                    }
+                }
+            }
+
+            if (charList.size > 1) {
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(charList) { cIdx, ch ->
+                        val isCharSel = cIdx == safeCharIndex
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isCharSel) FrostedPurplePrimary else FrostedGlassWhite80,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isCharSel) FrostedPurplePrimary else FrostedGlassBorder
+                            ),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { selectedCharIndex = cIdx }
+                        ) {
+                            Text(
+                                text = "${cIdx + 1}. $ch",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCharSel) Color.White else FrostedSlateDark
+                            )
+                        }
                     }
                 }
             }
@@ -342,15 +386,18 @@ fun HandwritingCanvas(
                 Button(
                     onClick = {
                         val strokeCount = strokes.size
+                        val expectedSingleCharStrokes = (vocabWord.strokeCount / charList.size.coerceAtLeast(1)).coerceIn(3, 14)
                         score = when {
                             strokeCount == 0 -> 0
-                            strokeCount in (vocabWord.strokeCount - 2)..(vocabWord.strokeCount + 2) -> (90 + (Math.random() * 8).toInt()).coerceIn(85, 98)
-                            else -> (70 + (Math.random() * 15).toInt()).coerceIn(60, 84)
+                            strokeCount in (expectedSingleCharStrokes - 2)..(expectedSingleCharStrokes + 2) -> (90 + (Math.random() * 8).toInt()).coerceIn(85, 98)
+                            else -> (72 + (Math.random() * 14).toInt()).coerceIn(65, 84)
                         }
-                        evaluationResult = if (score >= 85) {
-                            "ยอดเยี่ยม! ทรงอักษรสมดุลและลำดับขีดถูกต้องตามมาตรฐานพู่กันจีน ($score/100)"
+                        evaluationResult = if (strokeCount == 0) {
+                            "กรุณาลากนิ้วคัดตัวอักษร \"$characterToDraw\" ลงในช่องก่อนตรวจนะ"
+                        } else if (score >= 85) {
+                            "ยอดเยี่ยม! ทรงอักษร \"$characterToDraw\" สมดุลและลำดับขีดถูกต้อง ($score/100)"
                         } else {
-                            "คัดได้ดี! แนะนำให้รักษาสัดส่วนซ้ายขวาให้สมดุลตามช่อง '米' ($score/100)"
+                            "คัดได้ดี! แนะนำให้รักษาสัดส่วนของ \"$characterToDraw\" ตามช่อง '米' ($score/100)"
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = FrostedPurplePrimary),

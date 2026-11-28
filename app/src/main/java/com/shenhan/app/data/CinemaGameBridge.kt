@@ -6,26 +6,54 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object CinemaGameBridge {
-    private val _activeCinemaNodeId = MutableStateFlow<String?>(null)
-    val activeCinemaNodeId: StateFlow<String?> = _activeCinemaNodeId.asStateFlow()
-
     private val _questZones = MutableStateFlow<List<QuestZone>>(emptyList())
     val questZones: StateFlow<List<QuestZone>> = _questZones.asStateFlow()
+
+    private val _activeCinemaNodeId = MutableStateFlow<String?>(null)
+    val activeCinemaNodeId: StateFlow<String?> = _activeCinemaNodeId.asStateFlow()
 
     private val _isLiveSupabaseData = MutableStateFlow(false)
     val isLiveSupabaseData: StateFlow<Boolean> = _isLiveSupabaseData.asStateFlow()
 
-    fun updateQuestZones(zones: List<QuestZone>, isLive: Boolean = true) {
-        if (zones.isNotEmpty()) {
-            _questZones.value = zones
-            if (isLive) {
-                _isLiveSupabaseData.value = true
-            }
+    private val _customPacks = MutableStateFlow<List<CustomVocabPack>>(emptyList())
+    val customPacks: StateFlow<List<CustomVocabPack>> = _customPacks.asStateFlow()
+
+    private val _selectedCustomPackId = MutableStateFlow<String?>(null)
+    val selectedCustomPackId: StateFlow<String?> = _selectedCustomPackId.asStateFlow()
+
+    private val _requestedModeIndex = MutableStateFlow<Int?>(null)
+    val requestedModeIndex: StateFlow<Int?> = _requestedModeIndex.asStateFlow()
+
+    fun updateQuestZones(zones: List<QuestZone>) {
+        _questZones.value = zones
+    }
+
+    fun updateCustomPacks(packs: List<CustomVocabPack>) {
+        _customPacks.value = packs
+        if (_selectedCustomPackId.value != null && packs.none { it.id == _selectedCustomPackId.value }) {
+            _selectedCustomPackId.value = null
         }
     }
 
-    fun syncQuestZones(zones: List<QuestZone>) {
-        updateQuestZones(zones, isLive = true)
+    fun selectCustomPackFilter(packId: String?) {
+        _selectedCustomPackId.value = packId
+    }
+
+    fun openCustomPackInCinema(packId: String, modeIndex: Int) {
+        _selectedCustomPackId.value = packId
+        _activeCinemaNodeId.value = "${CustomVocabPackManager.CUSTOM_NODE_PREFIX}$packId"
+        _requestedModeIndex.value = modeIndex
+    }
+
+    fun clearRequestedMode() {
+        _requestedModeIndex.value = null
+    }
+
+    fun syncQuestZones(zones: List<QuestZone>, isLive: Boolean = true) {
+        _questZones.value = zones
+        if (isLive) {
+            _isLiveSupabaseData.value = true
+        }
     }
 
     fun openNodeInCinema(nodeId: String) {
@@ -38,7 +66,7 @@ object CinemaGameBridge {
 
     fun completeQuestNode(nodeId: String, stars: Int) {
         val currentZones = _questZones.value
-        if (currentZones.isEmpty()) return
+        val clampedStars = stars.coerceIn(1, 3)
         var unlockedNext = false
         val updatedZones = currentZones.map { zone ->
             val updatedNodes = zone.nodes.map { node ->
@@ -46,14 +74,17 @@ object CinemaGameBridge {
                     node.id == nodeId -> {
                         unlockedNext = true
                         node.copy(
-                            starsEarned = maxOf(node.starsEarned, stars.coerceIn(1, 3)),
+                            starsEarned = maxOf(node.starsEarned, clampedStars),
                             isUnlocked = true,
                             isCurrent = false
                         )
                     }
                     unlockedNext -> {
                         unlockedNext = false
-                        node.copy(isUnlocked = true, isCurrent = true)
+                        node.copy(
+                            isUnlocked = true,
+                            isCurrent = node.starsEarned == 0
+                        )
                     }
                     else -> node
                 }

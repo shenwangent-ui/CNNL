@@ -26,18 +26,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -334,9 +344,11 @@ private fun PlacementIntroView(
                     .border(3.dp, FrostedAmberPill, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "🎯",
-                    fontSize = 44.sp
+                Icon(
+                    imageVector = Icons.Default.TrackChanges,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(46.dp)
                 )
             }
 
@@ -379,19 +391,19 @@ private fun PlacementIntroView(
                     )
 
                     IntroFeatureRow(
-                        icon = "🎙️",
+                        icon = Icons.Default.Mic,
                         title = "วิเคราะห์ความแม่นยำ 4 มิติ",
                         desc = "วัดผลทั้งวรรณยุกต์ คำศัพท์ ไวยากรณ์ และการฟังบทสนทนา"
                     )
 
                     IntroFeatureRow(
-                        icon = "🗺️",
+                        icon = Icons.Default.Map,
                         title = "จัดตำแหน่งจุดเริ่มต้นในแผนที่",
                         desc = "ปลดล็อกโซน HSK 1 - 4 ที่เหมาะสมทันที ไม่ต้องเริ่มซ้ำซ้อน"
                     )
 
                     IntroFeatureRow(
-                        icon = "⏱️",
+                        icon = Icons.Default.Timer,
                         title = "กระชับและรวดเร็ว",
                         desc = "มีเพียง 8 ข้อคำถาม ใช้เวลาเพียง 2-3 นาทีเท่านั้น"
                     )
@@ -458,7 +470,7 @@ private fun PlacementIntroView(
 
 @Composable
 private fun IntroFeatureRow(
-    icon: String,
+    icon: ImageVector,
     title: String,
     desc: String
 ) {
@@ -466,7 +478,20 @@ private fun IntroFeatureRow(
         verticalAlignment = Alignment.Top,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text(text = icon, fontSize = 22.sp)
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(FrostedPurpleContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = FrostedPurplePrimary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(12.dp))
         Column {
             Text(
@@ -482,6 +507,13 @@ private fun IntroFeatureRow(
             )
         }
     }
+}
+
+private fun placementCategoryIcon(category: QuestionCategory): ImageVector = when (category) {
+    QuestionCategory.TONE_PITCH -> Icons.Default.GraphicEq
+    QuestionCategory.VOCAB_MEANING -> Icons.Default.Style
+    QuestionCategory.SENTENCE_ORDER -> Icons.Default.Extension
+    QuestionCategory.DIALOGUE_COMPREHENSION -> Icons.Default.Forum
 }
 
 @Composable
@@ -519,13 +551,24 @@ private fun PlacementQuizView(
                     shape = RoundedCornerShape(12.dp),
                     color = FrostedPurpleContainer
                 ) {
-                    Text(
-                        text = "${question.category.iconEmoji} ${question.category.titleTh}",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = FrostedPurplePrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = placementCategoryIcon(question.category),
+                            contentDescription = null,
+                            tint = FrostedPurplePrimary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = question.category.titleTh,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = FrostedPurplePrimary
+                        )
+                    }
                 }
 
                 Text(
@@ -759,7 +802,7 @@ private fun PlacementQuizView(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = if (selectedOptionIndex == question.correctIndex) "ตอบถูกต้อง! 🎉" else "คำอธิบายข้อนี้:",
+                                    text = if (selectedOptionIndex == question.correctIndex) "ตอบถูกต้อง!" else "คำอธิบายข้อนี้:",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
                                     color = if (selectedOptionIndex == question.correctIndex)
@@ -808,12 +851,15 @@ private fun PlacementQuizView(
                     modifier = Modifier.testTag("placement_next_btn")
                 ) {
                     Text(
-                        text = if (questionIndex == totalQuestions - 1) "ดูผลการประเมิน 📊" else "ข้อถัดไป",
+                        text = if (questionIndex == totalQuestions - 1) "ดูผลการประเมิน" else "ข้อถัดไป",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Next")
+                    Icon(
+                        imageVector = if (questionIndex == totalQuestions - 1) Icons.Default.Assessment else Icons.Default.ArrowForward,
+                        contentDescription = "Next"
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
@@ -995,7 +1041,12 @@ private fun PlacementResultView(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = skill.category.iconEmoji, fontSize = 16.sp)
+                                    Icon(
+                                        imageVector = placementCategoryIcon(skill.category),
+                                        contentDescription = null,
+                                        tint = FrostedPurplePrimary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = skill.category.titleTh,

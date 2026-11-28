@@ -30,13 +30,36 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.FolderSpecial
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Headset
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Train
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,6 +73,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +90,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shenhan.app.data.CustomVocabPackManager
 import com.shenhan.app.data.SampleData
 import com.shenhan.app.model.HskLevel
 import com.shenhan.app.model.QuestNode
@@ -102,9 +127,9 @@ fun QuestMapScreen(
     onNavigateToCinema: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.runtime.LaunchedEffect(questZones) { com.shenhan.app.data.CinemaGameBridge.updateQuestZones(questZones) }
-
-    androidx.compose.runtime.LaunchedEffect(questZones) { CinemaGameBridge.syncQuestZones(questZones) }
+    LaunchedEffect(questZones) {
+        CinemaGameBridge.updateQuestZones(questZones)
+    }
 
     var selectedZoneIndex by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
@@ -134,7 +159,7 @@ fun QuestMapScreen(
     var selectedAnswerIndex by remember { mutableStateOf<Int?>(null) }
     var isAnswerSubmitted by remember { mutableStateOf(false) }
 
-    val currentZone = questZones.getOrElse(selectedZoneIndex) { questZones.first() }
+    val currentZone = questZones.getOrNull(selectedZoneIndex) ?: questZones.firstOrNull() ?: return
 
     LazyColumn(
         modifier = modifier
@@ -391,8 +416,22 @@ fun QuestMapScreen(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                val isCustomZone = zone.id == CustomVocabPackManager.CUSTOM_ZONE_ID
+                                if (zone.id == "zone_favorite" || isCustomZone) {
+                                    Icon(
+                                        imageVector = if (isCustomZone) Icons.Default.FolderSpecial else Icons.Default.Bolt,
+                                        contentDescription = null,
+                                        tint = if (isSelected) Color.White else if (isCustomZone) FrostedPurplePrimary else FrostedPitchTarget,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
                                 Text(
-                                    text = if (zone.id == "zone_favorite") "⚡ ทันใจ" else zone.hskLevel.title,
+                                    text = when {
+                                        isCustomZone -> "ไฟล์ของฉัน"
+                                        zone.id == "zone_favorite" -> "ทันใจ"
+                                        else -> zone.hskLevel.title
+                                    },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = if (isSelected) Color.White else FrostedSlateDark
@@ -441,13 +480,26 @@ fun QuestMapScreen(
                                 color = Color.White.copy(alpha = 0.2f),
                                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
                             ) {
-                                Text(
-                                    text = if (currentZone.id == "zone_favorite") "⚡ หมวดทันใจ • เอาตัวรอดในจีน 100%" else currentZone.hskLevel.title,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    if (currentZone.id == "zone_favorite") {
+                                        Icon(
+                                            imageVector = Icons.Default.Bolt,
+                                            contentDescription = null,
+                                            tint = FrostedPitchTarget,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(
+                                        text = if (currentZone.id == "zone_favorite") "หมวดทันใจ • เอาตัวรอดในจีน 100%" else currentZone.hskLevel.title,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -543,7 +595,7 @@ fun QuestMapScreen(
                 scriptMode = scriptMode,
                 onNodeClick = {
                     if (!node.isUnlocked && node.starsEarned == 0) {
-                        Toast.makeText(context, "🔒 กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
                     } else if (node.dialogueTurns.isNotEmpty()) {
                         activeDialogueNode = node
                         dialogueStepIndex = 0
@@ -556,7 +608,10 @@ fun QuestMapScreen(
                         when (node.nodeType) {
                             com.shenhan.app.model.QuestNodeType.TONE_DRILL -> onNavigateToLab()
                             com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> onNavigateToLab()
-                            com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> onNavigateToCinema()
+                            com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> {
+                                CinemaGameBridge.openNodeInCinema(node.id)
+                                onNavigateToCinema()
+                            }
                             com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER,
                             com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> {
                                 activeNodeId = node.id
@@ -565,6 +620,14 @@ fun QuestMapScreen(
                                 isAnswerSubmitted = false
                             }
                         }
+                    }
+                },
+                onOpenInCinema = {
+                    if (!node.isUnlocked && node.starsEarned == 0) {
+                        Toast.makeText(context, "กรุณาผ่านด่านก่อนหน้าเพื่อปลดล็อกด่านนี้", Toast.LENGTH_SHORT).show()
+                    } else {
+                        CinemaGameBridge.openNodeInCinema(node.id)
+                        onNavigateToCinema()
                     }
                 }
             )
@@ -674,7 +737,7 @@ fun QuestMapScreen(
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Text(
-                                    text = if (selectedAnswerIndex == question.correctIndex) "ถูกต้อง! 🎉 (+75 XP)" else "ยังไม่ถูกต้อง",
+                                    text = if (selectedAnswerIndex == question.correctIndex) "ถูกต้อง! (+75 XP)" else "ยังไม่ถูกต้อง",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     color = if (selectedAnswerIndex == question.correctIndex) FrostedMatchGreenDark else Color(0xFFDC2626)
@@ -739,12 +802,21 @@ fun QuestMapScreen(
                 containerColor = FrostedGlassWhite80,
                 shape = RoundedCornerShape(24.dp),
                 title = {
-                    Text(
-                        text = if (isNpc) "🎧 ฟังคู่สนทนา (${dialogueStepIndex + 1}/${turns.size})" else "🗣️ ตาคุณพูดตอบ (${dialogueStepIndex + 1}/${turns.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isNpc) Icons.Default.Headset else Icons.Default.RecordVoiceOver,
+                            contentDescription = null,
+                            tint = FrostedPurplePrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isNpc) "ฟังคู่สนทนา (${dialogueStepIndex + 1}/${turns.size})" else "ตาคุณพูดตอบ (${dialogueStepIndex + 1}/${turns.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 },
                 text = {
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -768,7 +840,34 @@ fun QuestMapScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = FrostedGlassWhite80)
                         ) {
-                            Text("🔊 ฟังเสียงอ่านภาษาจีนอีกครั้ง", color = Color.White, fontWeight = FontWeight.Bold)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("ฟังเสียงอ่านภาษาจีนอีกครั้ง", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                activeDialogueNode = null
+                                CinemaGameBridge.openNodeInCinema(dNode.id)
+                                onNavigateToCinema()
+                            },
+                            modifier = Modifier.fillMaxWidth().testTag("dialogue_open_cinema_btn"),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, FrostedPurplePrimary)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = FrostedPurplePrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("ส่งด่านนี้เข้าฝึกสดใน AI Cinema", color = FrostedPurplePrimary, fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -784,13 +883,23 @@ fun QuestMapScreen(
                             } else {
                                 onCompleteNode(dNode.id, 3)
                                 activeDialogueNode = null
-                                Toast.makeText(context, "🎉 ผ่านบทสนทนาแล้ว! +${dNode.xpReward} XP", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "ผ่านบทสนทนาแล้ว! +${dNode.xpReward} XP", Toast.LENGTH_SHORT).show()
                             }
                         },
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = FrostedPurplePrimary)
                     ) {
-                        Text(if (dialogueStepIndex < turns.lastIndex) "ประโยคถัดไป ▶" else "เรียนจบรับ 3 ดาว ★")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(if (dialogueStepIndex < turns.lastIndex) "ประโยคถัดไป" else "เรียนจบรับ 3 ดาว")
+                            Icon(
+                                imageVector = if (dialogueStepIndex < turns.lastIndex) Icons.AutoMirrored.Filled.ArrowForward else Icons.Default.Star,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 },
                 dismissButton = {
@@ -805,20 +914,46 @@ fun QuestMapScreen(
 }
 
 
+private fun questNodeVectorIcon(node: QuestNode): ImageVector {
+    if (!node.isUnlocked && node.starsEarned == 0) return Icons.Default.Lock
+    return when (node.id) {
+        "fav_01" -> Icons.Default.FlightTakeoff
+        "fav_02" -> Icons.Default.Explore
+        "fav_03" -> Icons.Default.MedicalServices
+        "fav_04" -> Icons.Default.CreditCard
+        "fav_05" -> Icons.Default.Train
+        "fav_06" -> Icons.Default.Home
+        "fav_07" -> Icons.Default.Favorite
+        "fav_08" -> Icons.Default.ShoppingBag
+        "fav_09" -> Icons.Default.LocalHospital
+        "fav_10" -> Icons.Default.Flight
+        else -> when (node.nodeType) {
+            com.shenhan.app.model.QuestNodeType.TONE_DRILL -> Icons.Default.GraphicEq
+            com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> Icons.Default.Style
+            com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> Icons.Default.Movie
+            com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER -> Icons.Default.Extension
+            com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> Icons.Default.EmojiEvents
+        }
+    }
+}
+
 @Composable
 fun QuestNodeCard(
     node: QuestNode,
     scriptMode: ScriptMode,
     onNodeClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenInCinema: () -> Unit = {}
 ) {
-    val nodeTypeBadge = when (node.nodeType) {
-        com.shenhan.app.model.QuestNodeType.TONE_DRILL -> "🎙️ วิเคราะห์วรรณยุกต์"
-        com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> "📇 คลังศัพท์ SRS"
-        com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> "🎬 ซีนาริโอภาพยนตร์"
-        com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER -> "🧩 ไวยากรณ์ประโยค"
-        com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> "⚔️ ประลองบอส HSK"
+    val (nodeTypeIcon, nodeTypeLabel) = when (node.nodeType) {
+        com.shenhan.app.model.QuestNodeType.TONE_DRILL -> Icons.Default.GraphicEq to "วิเคราะห์วรรณยุกต์"
+        com.shenhan.app.model.QuestNodeType.VOCAB_SRS -> Icons.Default.Style to "คลังศัพท์ SRS"
+        com.shenhan.app.model.QuestNodeType.CINEMA_ROLEPLAY -> Icons.Default.Movie to "ซีนาริโอภาพยนตร์"
+        com.shenhan.app.model.QuestNodeType.SENTENCE_BUILDER -> Icons.Default.Extension to "ไวยากรณ์ประโยค"
+        com.shenhan.app.model.QuestNodeType.BOSS_CHALLENGE -> Icons.Default.EmojiEvents to "ประลองบอส HSK"
     }
+
+    val isLocked = !node.isUnlocked && node.starsEarned == 0
 
     Card(
         modifier = modifier
@@ -841,7 +976,7 @@ fun QuestNodeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Node Icon / Emoji
+                // Node Vector Icon Emblem
                 Box(
                     modifier = Modifier
                         .size(50.dp)
@@ -849,10 +984,23 @@ fun QuestNodeCard(
                         .background(
                             if (node.starsEarned > 0) FrostedMatchGreenContainer else FrostedPurpleContainer
                         )
-                        .border(1.5.dp, if (node.starsEarned > 0) FrostedMatchGreen.copy(alpha = 0.5f) else FrostedPurplePrimary.copy(alpha = 0.3f), CircleShape),
+                        .border(
+                            1.5.dp,
+                            if (node.starsEarned > 0) FrostedMatchGreen.copy(alpha = 0.5f) else FrostedPurplePrimary.copy(alpha = 0.35f),
+                            CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = if (!node.isUnlocked && node.starsEarned == 0) "🔒" else node.iconEmoji, fontSize = 24.sp)
+                    Icon(
+                        imageVector = questNodeVectorIcon(node),
+                        contentDescription = node.titleTh,
+                        tint = when {
+                            isLocked -> FrostedSlateLight
+                            node.starsEarned > 0 -> Color(0xFF4ADE80)
+                            else -> FrostedPurplePrimary
+                        },
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -862,13 +1010,24 @@ fun QuestNodeCard(
                         shape = RoundedCornerShape(6.dp),
                         color = Color(0xFFF1F5F9)
                     ) {
-                        Text(
-                            text = nodeTypeBadge,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = FrostedSlateLight
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = nodeTypeIcon,
+                                contentDescription = null,
+                                tint = Color(0xFF0F172A),
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = nodeTypeLabel,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0F172A)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
@@ -892,7 +1051,7 @@ fun QuestNodeCard(
                 }
             }
 
-            // Star Rating or Play button
+            // Star Rating, Status & AI Cinema Launch Button
             Column(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.padding(start = 8.dp)
@@ -914,12 +1073,43 @@ fun QuestNodeCard(
                     border = BorderStroke(1.dp, if (node.starsEarned == 3) FrostedMatchGreen.copy(alpha = 0.4f) else FrostedPurplePrimary.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = when { !node.isUnlocked && node.starsEarned == 0 -> "ล็อกอยู่"; node.starsEarned > 0 -> "ผ่านแล้ว ✓"; else -> "เริ่มลุย ▶" },
+                        text = when { isLocked -> "ล็อกอยู่"; node.starsEarned > 0 -> "ผ่านแล้ว ✓"; else -> "เริ่มลุย" },
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = when { !node.isUnlocked && node.starsEarned == 0 -> FrostedSlateLight; node.starsEarned > 0 -> Color(0xFF4ADE80); else -> FrostedPurplePrimary }
+                        color = when { isLocked -> FrostedSlateLight; node.starsEarned > 0 -> Color(0xFF4ADE80); else -> FrostedPurplePrimary }
                     )
+                }
+                if (!isLocked) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0x2638BDF8),
+                        border = BorderStroke(1.dp, Color(0xFF38BDF8).copy(alpha = 0.6f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onOpenInCinema() }
+                            .testTag("quest_open_cinema_${node.id}")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Movie,
+                                contentDescription = null,
+                                tint = Color(0xFF7DD3FC),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "AI Cinema",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7DD3FC)
+                            )
+                        }
+                    }
                 }
             }
         }

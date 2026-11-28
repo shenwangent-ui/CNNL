@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -260,7 +261,12 @@ fun AuthScreen(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "🎯", fontSize = 24.sp)
+                        Icon(
+                            imageVector = Icons.Default.TrackChanges,
+                            contentDescription = null,
+                            tint = FrostedMatchGreenDark,
+                            modifier = Modifier.size(26.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
@@ -652,7 +658,16 @@ private fun ThirdPartyLoginButton(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (iconEmoji == "🌐") { GoogleBrandLogo(size = 24.dp) } else { Text(text = iconEmoji, fontSize = 22.sp) }
+            if (iconEmoji == "🌐") {
+                GoogleBrandLogo(size = 24.dp)
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = title,
+                    tint = FrostedPurplePrimary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

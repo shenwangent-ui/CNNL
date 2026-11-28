@@ -1,6 +1,7 @@
 package com.shenhan.app.data
 
 import android.content.Context
+import android.net.Uri
 import com.shenhan.app.model.AppLanguage
 import com.shenhan.app.model.AuthProvider
 import com.shenhan.app.model.HskLevel
@@ -29,8 +30,46 @@ class AppRepository(private val context: Context) {
     private val supabaseSync = SupabaseSyncManager()
 
     
+    private val _customPacks = MutableStateFlow(CustomVocabPackManager.loadPacks(context))
+    val customPacks: StateFlow<List<CustomVocabPack>> = _customPacks.asStateFlow()
+
+    private fun mergeCustomQuestZones(baseZones: List<QuestZone>, packs: List<CustomVocabPack> = _customPacks.value): List<QuestZone> {
+        val withoutCustom = baseZones.filterNot { it.id == CustomVocabPackManager.CUSTOM_ZONE_ID }
+        val customZone = CustomVocabPackManager.buildCustomQuestZone(packs)
+        return if (customZone != null) {
+            listOf(customZone) + withoutCustom
+        } else {
+            withoutCustom
+        }
+    }
+
+    private fun mergeCustomVocabWords(
+        baseWords: List<VocabWord>,
+        packs: List<CustomVocabPack> = _customPacks.value,
+        existingWords: List<VocabWord> = emptyList()
+    ): List<VocabWord> {
+        val existingCustomById = existingWords
+            .filter { it.id.startsWith(CustomVocabPackManager.CUSTOM_WORD_PREFIX) }
+            .associateBy { it.id }
+        val customWords = CustomVocabPackManager.toVocabWords(packs).map { word ->
+            val prev = existingCustomById[word.id]
+            if (prev != null) {
+                word.copy(
+                    srsStage = prev.srsStage,
+                    mastery = prev.mastery,
+                    lastReviewedTimestamp = prev.lastReviewedTimestamp,
+                    isBookmarked = prev.isBookmarked
+                )
+            } else {
+                word
+            }
+        }
+        val cleanBase = baseWords.filterNot { it.id.startsWith(CustomVocabPackManager.CUSTOM_WORD_PREFIX) }
+        return customWords + cleanBase
+    }
+
     private fun buildZeroQuestZones(): List<QuestZone> {
-        return SampleData.questZones.mapIndexed { zIdx, zone ->
+        val base = SampleData.questZones.mapIndexed { zIdx, zone ->
             zone.copy(
                 isUnlocked = (zIdx == 0),
                 nodes = zone.nodes.mapIndexed { nIdx, node ->
@@ -42,16 +81,18 @@ class AppRepository(private val context: Context) {
                 }
             )
         }
+        return mergeCustomQuestZones(base)
     }
 
     private fun buildZeroVocabList(): List<VocabWord> {
-        return SampleData.vocabList.map { word ->
+        val base = SampleData.vocabList.map { word ->
             word.copy(
                 srsStage = 0,
                 mastery = SrsMastery.NEW,
                 isBookmarked = false
             )
         }
+        return mergeCustomVocabWords(base)
     }
 
     fun resetProgressToZero() {
@@ -75,9 +116,10 @@ class AppRepository(private val context: Context) {
     fun syncFromSupabase() {
         repoScope.launch {
             val uid = _currentUser.value?.id
-            val (zones, stats, ok) = supabaseSync.fetchZonesAndLessons(_questZones.value, uid)
+            val baseOnly = _questZones.value.filterNot { it.id == CustomVocabPackManager.CUSTOM_ZONE_ID }
+            val (zones, stats, ok) = supabaseSync.fetchZonesAndLessons(baseOnly, uid)
             if (ok) {
-                _questZones.value = zones
+                _questZones.value = mergeCustomQuestZones(zones)
             }
             if (stats != null) {
                 _userXp.value = maxOf(_userXp.value, stats.xp)
@@ -200,6 +242,41 @@ class AppRepository(private val context: Context) {
     // Vocab SRS Items
     private val _vocabList = MutableStateFlow(buildZeroVocabList())
     val vocabList: StateFlow<List<VocabWord>> = _vocabList.asStateFlow()
+
+    init {
+        CinemaGameBridge.updateCustomPacks(_customPacks.value)
+        CinemaGameBridge.updateQuestZones(_questZones.value)
+    }
+
+    fun importVocabPackFromUri(uri: Uri, customName: String? = null): Result<CustomVocabPack> {
+        val readResult = CustomVocabPackManager.readFileTextAndName(context, uri)
+        val (detectedName, rawText) = readResult.getOrElse { return Result.failure(it) }
+        val finalName = customName?.takeIf { it.isNotBlank() } ?: detectedName
+        return importVocabPackFromText(finalName, rawText)
+    }
+
+    fun importVocabPackFromText(packName: String, rawText: String): Result<CustomVocabPack> {
+        val parsed = CustomVocabPackManager.parsePackFromText(packName, rawText)
+        return parsed.onSuccess { newPack ->
+            val updatedPacks = listOf(newPack) + _customPacks.value
+            _customPacks.value = updatedPacks
+            CustomVocabPackManager.savePacks(context, updatedPacks)
+            _vocabList.value = mergeCustomVocabWords(_vocabList.value, updatedPacks, _vocabList.value)
+            _questZones.value = mergeCustomQuestZones(_questZones.value, updatedPacks)
+            CinemaGameBridge.updateCustomPacks(updatedPacks)
+            CinemaGameBridge.updateQuestZones(_questZones.value)
+        }
+    }
+
+    fun deleteCustomVocabPack(packId: String) {
+        val updatedPacks = _customPacks.value.filterNot { it.id == packId }
+        _customPacks.value = updatedPacks
+        CustomVocabPackManager.savePacks(context, updatedPacks)
+        _vocabList.value = mergeCustomVocabWords(_vocabList.value, updatedPacks, _vocabList.value)
+        _questZones.value = mergeCustomQuestZones(_questZones.value, updatedPacks)
+        CinemaGameBridge.updateCustomPacks(updatedPacks)
+        CinemaGameBridge.updateQuestZones(_questZones.value)
+    }
 
     // Tone Practice Syllables
     private val _toneSyllables = MutableStateFlow(SampleData.toneSyllables)
