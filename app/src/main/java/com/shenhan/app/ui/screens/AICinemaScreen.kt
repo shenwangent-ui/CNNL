@@ -98,6 +98,8 @@ import com.shenhan.app.data.CustomVocabPack
 import com.shenhan.app.data.CustomVocabPackManager
 import com.shenhan.app.data.GeminiSuggestion
 import com.shenhan.app.data.GeminiTutorService
+import com.shenhan.app.data.StoredChatMessage
+import com.shenhan.app.data.CinemaChatHistoryStore
 import com.shenhan.app.model.QuestZone
 import com.shenhan.app.model.ScriptMode
 import com.shenhan.app.ui.theme.FrostedSlateLight
@@ -777,7 +779,58 @@ private fun GeminiInteractiveChatGame(
     }
 
     // เริ่มต้นด่าน: เรียก Gemini เปิดฉากสนทนาตามสถานการณ์จริงอัตโนมัติ
+    var lastResetSeed by remember(activeNode.id) { mutableStateOf(sessionSeed) }
+
+    fun persistCurrentChat() {
+        CinemaChatHistoryStore.saveSession(
+            context = context,
+            nodeId = activeNode.id,
+            messages = chatHistory.map {
+                StoredChatMessage(
+                    id = it.id,
+                    isUser = it.isUser,
+                    zhText = it.zhText,
+                    pinyin = it.pinyin,
+                    thText = it.thText,
+                    coachFeedback = it.coachFeedback,
+                    accuracyPct = it.accuracyPct
+                )
+            },
+            passedTurns = passedTurns,
+            isLessonCompleted = isLessonCompleted
+        )
+    }
+
     LaunchedEffect(activeNode.id, scriptMode, sessionSeed) {
+        val isManualReset = sessionSeed != lastResetSeed
+        lastResetSeed = sessionSeed
+
+        if (isManualReset) {
+            CinemaChatHistoryStore.clearSession(context, activeNode.id)
+        } else {
+            val savedSession = CinemaChatHistoryStore.loadSession(context, activeNode.id)
+            if (savedSession != null && savedSession.messages.isNotEmpty()) {
+                chatHistory.clear()
+                chatHistory.addAll(
+                    savedSession.messages.map {
+                        CinemaChatBubble(
+                            id = it.id,
+                            isUser = it.isUser,
+                            zhText = it.zhText,
+                            pinyin = it.pinyin,
+                            thText = it.thText,
+                            coachFeedback = it.coachFeedback,
+                            accuracyPct = it.accuracyPct,
+                            animateTyping = false
+                        )
+                    }
+                )
+                passedTurns = savedSession.passedTurns
+                isLessonCompleted = savedSession.isLessonCompleted
+                loadFallbackSuggestions(savedSession.passedTurns)
+                return@LaunchedEffect
+            }
+        }
         chatHistory.clear()
         passedTurns = 0
         isLessonCompleted = false
@@ -851,6 +904,7 @@ private fun GeminiInteractiveChatGame(
                 thText = "ส่งให้ผู้ช่วยเฉินตรวจแล้ว"
             )
         )
+        persistCurrentChat()
         userInput = ""
         isGeminiTyping = true
 
@@ -885,6 +939,8 @@ private fun GeminiInteractiveChatGame(
                         animateTyping = true
                     )
                 )
+                persistCurrentChat()
+                persistCurrentChat()
                 onSpeak(turn.replyZh)
 
                 if (turn.suggestions.isNotEmpty()) {
@@ -912,6 +968,7 @@ private fun GeminiInteractiveChatGame(
                         coachFeedback = "⚠️ ระบบแจ้งเตือน: ${errMsg.take(140)}",
                         accuracyPct = 0
                     )
+                    persistCurrentChat()
                 }
             }
         }
