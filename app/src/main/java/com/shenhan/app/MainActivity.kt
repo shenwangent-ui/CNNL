@@ -123,39 +123,10 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(Unit) {
-                val rel = SmartNotificationManager.checkForAppUpdate(this@MainActivity, notifyTopBar = true)
-                if (rel != null) {
-                    pendingUpdateRelease = rel
-                    showUpdateDialog = true
-                }
+                SmartNotificationManager.checkForAppUpdate(this@MainActivity, notifyTopBar = true)
                 SmartNotificationManager.checkPromotionsAndNews(this@MainActivity)
             }
 
-            if (showUpdateDialog && pendingUpdateRelease != null) {
-                val rel = pendingUpdateRelease!!
-                AlertDialog(
-                    onDismissRequest = { showUpdateDialog = false },
-                    title = { Text("🚀 อัปเดตเวอร์ชันใหม่ (${rel.versionTag})") },
-                    text = {
-                        Text(
-                            "มีฟีเจอร์และการปรับปรุงใหม่พร้อมติดตั้งแล้ว:\n\n${rel.notes}\n\nกด 'อัปเดตทันที' เพื่อดาวน์โหลดและติดตั้งทับเวอร์ชันเดิมได้เลยครับ"
-                        )
-                    },
-                    confirmButton = {
-                        Button(onClick = {
-                            showUpdateDialog = false
-                            SmartNotificationManager.startApkUpdateDownload(this@MainActivity, rel)
-                        }) {
-                            Text("อัปเดตทันที")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showUpdateDialog = false }) {
-                            Text("ไว้ภายหลัง")
-                        }
-                    }
-                )
-            }
             com.shenhan.app.ui.components.InAppUpdateOverlay()
 
             MyApplicationTheme {

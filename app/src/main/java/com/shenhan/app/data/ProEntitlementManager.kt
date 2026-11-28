@@ -13,7 +13,7 @@ object ProEntitlementManager {
 
     const val FREE_DAILY_CHAT_LIMIT = 8
     const val FREE_MAX_CUSTOM_PACKS = 2
-    const val FREE_UNLOCKED_ZONES = 2
+    const val FREE_UNLOCKED_ZONES = 3
 
     fun isPro(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
