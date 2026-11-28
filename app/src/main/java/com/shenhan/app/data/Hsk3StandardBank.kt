@@ -4,7 +4,12 @@ import android.content.Context
 import com.shenhan.app.model.HskLevel
 import com.shenhan.app.model.SrsMastery
 import com.shenhan.app.model.VocabWord
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 data class SurvivalComboSentence(
     val sourceLevelsLabel: String,
@@ -16,19 +21,76 @@ data class SurvivalComboSentence(
 )
 
 object Hsk3StandardBank {
+    private const val PREFS_NAME = "shenhan_remote_curriculum_prefs"
+    private const val KEY_BACKEND_BASE_URL = "backend_curriculum_base_url"
+    private const val KEY_LAST_SYNC_MS = "last_curriculum_sync_ms"
+
+    const val DEFAULT_BACKEND_BASE_URL =
+        "https://raw.githubusercontent.com/shenwangent-ui/CNNL/main/curriculum"
+
     @Volatile
     private var cachedMergedVocab: List<VocabWord>? = null
 
-    fun getAllVocab(context: Context): List<VocabWord> {
-        cachedMergedVocab?.let { return it }
+    fun invalidateCache() {
+        cachedMergedVocab = null
+    }
 
-        val fromAssets = mutableListOf<VocabWord>()
+    fun getBackendBaseUrl(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_BACKEND_BASE_URL, DEFAULT_BACKEND_BASE_URL)
+            ?.trimEnd('/')
+            ?.takeIf { it.isNotBlank() }
+            ?: DEFAULT_BACKEND_BASE_URL
+    }
+
+    fun setBackendBaseUrl(context: Context, url: String) {
+        val cleaned = url.trim().trimEnd('/')
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putString(KEY_BACKEND_BASE_URL, cleaned).apply()
+        invalidateCache()
+    }
+
+    suspend fun syncRemoteCurriculum(context: Context): Int = withContext(Dispatchers.IO) {
+        val baseUrl = getBackendBaseUrl(context)
+        val cacheDir = File(context.filesDir, "remote_curriculum").apply { mkdirs() }
+        var downloadedFiles = 0
+
+        for (lvl in 1..6) {
+            try {
+                val url = URL("$baseUrl/hsk$lvl.json")
+                val conn = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    setRequestProperty("User-Agent", "ShenHan-CurriculumSync")
+                    connectTimeout = 8000
+                    readTimeout = 12000
+                }
+                if (conn.responseCode in 200..299) {
+                    val body = conn.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                    val arr = JSONArray(body)
+                    if (arr.length() > 0) {
+                        File(cacheDir, "hsk$lvl.json").writeText(body, Charsets.UTF_8)
+                        downloadedFiles++
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        if (downloadedFiles > 0) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putLong(KEY_LAST_SYNC_MS, System.currentTimeMillis()).apply()
+            invalidateCache()
+        }
+        getAllVocab(context).size
+    }
+
+    private fun parseJsonVocab(jsonStr: String, fallbackLevel: Int = 1): List<VocabWord> {
+        val list = mutableListOf<VocabWord>()
         try {
-            val jsonStr = context.assets.open("hsk3_vocab.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
             val arr = JSONArray(jsonStr)
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
-                val lvlNum = obj.optInt("level", 1)
+                val lvlNum = obj.optInt("level", fallbackLevel)
                 val hskLvl = when (lvlNum) {
                     1 -> HskLevel.HSK1
                     2 -> HskLevel.HSK2
@@ -37,12 +99,16 @@ object Hsk3StandardBank {
                     5 -> HskLevel.HSK5
                     else -> HskLevel.HSK6
                 }
-                fromAssets.add(
+                val simp = obj.optString("simplified", "").trim()
+                if (simp.isBlank()) continue
+                val trad = obj.optString("traditional", simp).ifBlank { simp }
+
+                list.add(
                     VocabWord(
-                        id = obj.optString("id", "hsk3_asset_$i"),
+                        id = obj.optString("id", "hsk3_${lvlNum}_$i"),
                         hskLevel = hskLvl,
-                        simplified = obj.optString("simplified", ""),
-                        traditional = obj.optString("traditional", ""),
+                        simplified = simp,
+                        traditional = trad,
                         pinyin = obj.optString("pinyin", ""),
                         toneNumbers = listOf(1),
                         partOfSpeech = obj.optString("pos", "n"),
@@ -52,18 +118,40 @@ object Hsk3StandardBank {
                         exampleSentenceTrad = obj.optString("exampleTrad", ""),
                         examplePinyin = obj.optString("examplePinyin", ""),
                         exampleMeaningTh = obj.optString("exampleTh", ""),
-                        exampleMeaningEn = "",
+                        exampleMeaningEn = obj.optString("exampleEn", ""),
                         mastery = SrsMastery.NEW
                     )
                 )
             }
         } catch (_: Exception) {
         }
+        return list
+    }
 
-        // รวมกับ SampleData.vocabList โดยไม่ให้คำศัพท์ซ้ำกัน
+    fun getAllVocab(context: Context): List<VocabWord> {
+        cachedMergedVocab?.let { return it }
+
+        val bundledFromAssets = try {
+            val jsonStr = context.assets.open("hsk3_vocab.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+            parseJsonVocab(jsonStr, 1)
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        val remoteCached = mutableListOf<VocabWord>()
+        val cacheDir = File(context.filesDir, "remote_curriculum")
+        if (cacheDir.exists()) {
+            for (lvl in 1..6) {
+                val f = File(cacheDir, "hsk$lvl.json")
+                if (f.exists()) {
+                    remoteCached.addAll(parseJsonVocab(f.readText(Charsets.UTF_8), lvl))
+                }
+            }
+        }
+
         val seenSimplified = HashSet<String>()
         val combined = mutableListOf<VocabWord>()
-        for (w in SampleData.vocabList + fromAssets) {
+        for (w in SampleData.vocabList + bundledFromAssets + remoteCached) {
             if (w.simplified.isNotBlank() && seenSimplified.add(w.simplified)) {
                 combined.add(w)
             }
@@ -72,16 +160,10 @@ object Hsk3StandardBank {
         return combined
     }
 
-    /**
-     * คืนค่าคำศัพท์สะสมตั้งแต่ HSK 1 จนถึงระดับ targetLevel (เช่น targetLevel = HSK3 จะได้ HSK 1 + HSK 2 + HSK 3 รวมกัน)
-     */
     fun getCumulativeVocabUpTo(context: Context, targetLevel: HskLevel): List<VocabWord> {
         return getAllVocab(context).filter { it.hskLevel.level <= targetLevel.level }
     }
 
-    /**
-     * สร้างประโยคผสมคำศัพท์สะสมข้ามระดับ (นำคำศัพท์จาก HSK ก่อนหน้ามาผสมกับคำศัพท์ในระดับปัจจุบันเพื่อใช้เอาตัวรอดจริง)
-     */
     fun getSurvivalComboSentences(targetLevel: HskLevel): List<SurvivalComboSentence> {
         return when (targetLevel) {
             HskLevel.HSK1 -> listOf(

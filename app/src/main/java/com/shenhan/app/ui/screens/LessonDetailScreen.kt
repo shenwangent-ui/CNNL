@@ -1,4 +1,6 @@
 package com.shenhan.app.ui.screens
+import kotlinx.coroutines.launch
+import android.widget.Toast
 import com.shenhan.app.ui.components.PinyinCompleteModule
 import com.shenhan.app.data.Hsk3StandardBank
 import androidx.compose.ui.platform.LocalContext
@@ -49,9 +51,13 @@ fun LessonDetailScreen(
     onCompleteLesson: (Int) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var vocabRefreshTick by remember { mutableIntStateOf(0) }
+    var isSyncingRemote by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showFullLevelBank by remember { mutableStateOf(false) }
 
-    val allStandardVocab = remember(context) { Hsk3StandardBank.getAllVocab(context) }
+    val allStandardVocab = remember(context, vocabRefreshTick) { Hsk3StandardBank.getAllVocab(context) }
     val cumulativeVocab = remember(context, node.hskLevel) {
         Hsk3StandardBank.getCumulativeVocabUpTo(context, node.hskLevel)
     }
@@ -64,7 +70,7 @@ fun LessonDetailScreen(
         val pool = matched.ifEmpty { allStandardVocab }
         val offset = (node.id.hashCode().let { if (it < 0) -it else it }) % (pool.size.coerceAtLeast(1))
         val rotated = pool.drop(offset) + pool.take(offset)
-        rotated.take(10)
+        if (showFullLevelBank) pool else rotated.take(15)
     }
 
     val quizItems = remember(node.id, lessonVocab, cumulativeVocab) {
@@ -445,13 +451,54 @@ fun LessonDetailScreen(
                 }
 
                 item {
-                    Text(
-                        text = "📖 คำศัพท์สำคัญประจำบท (${lessonVocab.size} คำ)",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    val levelTotalCount = allStandardVocab.count { it.hskLevel == node.hskLevel }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "📖 คำศัพท์${node.hskLevel.title} (${lessonVocab.size}/$levelTotalCount คำ)",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(
+                                enabled = !isSyncingRemote,
+                                onClick = {
+                                    isSyncingRemote = true
+                                    scope.launch {
+                                        val total = Hsk3StandardBank.syncRemoteCurriculum(context)
+                                        vocabRefreshTick++
+                                        isSyncingRemote = false
+                                        Toast.makeText(
+                                            context,
+                                            "☁️ ซิงก์คลังศัพท์หลังบ้านสำเร็จ (รวมทั้งหมด $total คำ)",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            ) {
+                                Text(
+                                    text = if (isSyncingRemote) "กำลังซิงก์..." else "☁️ ซิงก์",
+                                    color = Color(0xFF34D399),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            TextButton(onClick = { showFullLevelBank = !showFullLevelBank }) {
+                                Text(
+                                    text = if (showFullLevelBank) "ย่อลง" else "ดูทั้งหมด ($levelTotalCount)",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
                 }
 
                 items(lessonVocab) { word ->

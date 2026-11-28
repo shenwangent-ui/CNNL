@@ -1,4 +1,5 @@
 package com.shenhan.app
+import com.shenhan.app.data.Hsk3StandardBank
 import com.shenhan.app.data.InAppAutoUpdater
 import android.widget.Toast
 import com.shenhan.app.data.SmartNotificationManager
@@ -133,6 +134,7 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_LONG
                     ).show()
                 }
+                Hsk3StandardBank.syncRemoteCurriculum(this@MainActivity)
                 SmartNotificationManager.checkForAppUpdate(this@MainActivity, notifyTopBar = true)
                 SmartNotificationManager.checkPromotionsAndNews(this@MainActivity)
             }
